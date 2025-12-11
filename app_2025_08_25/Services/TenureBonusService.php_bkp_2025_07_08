@@ -1,0 +1,87 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\ProcessedAttendance;
+use App\Models\Worker;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+
+
+
+class TenureBonusService
+{
+     /**
+     * Calculates the actual date a worker becomes eligible after a certain number of working days.
+     *
+     * @param Carbon $startDate The worker's joining date.
+     * @param int $numberOfWorkingDays The number of working days required by the rule.
+     * @return Carbon The actual date of eligibility.
+     */
+
+
+
+     public function calculateEligibilityActualDate(Worker $worker, int $numberOfPaidDaysRequired)
+    {
+
+        $ruleStartDate = Carbon::parse('2025-06-01');
+        $joiningDate = Carbon::parse($worker->date_of_joining);
+
+        $dateIterator = $joiningDate->greaterThan($ruleStartDate)
+            ? $joiningDate->copy()
+            : $ruleStartDate->copy();
+
+        $paidDaysCounted = 0.0;
+
+        // $maxIterations =  365 * 10;//Carbon::today()->diffInDays($dateIterator) + 1;//365 * 10;
+        $maxIterations = Carbon::parse($dateIterator)->diffInDays(Carbon::today()) + 1;
+
+        $iterations = 0;
+
+        while ($paidDaysCounted < $numberOfPaidDaysRequired && $iterations < $maxIterations) {
+            $attendanceRecord = ProcessedAttendance::where('worker_id', $worker->id)
+                ->whereDate('date', $dateIterator->toDateString())
+                ->first();
+            $dayValue = 0.0;
+            if ($attendanceRecord && $attendanceRecord->status) {
+                $status = strtoupper(trim($attendanceRecord->status));
+
+               switch ($status) {
+                    case 'P':   // Present
+                //    case 'W/O': // Week Off
+                //    case 'EL':  // Earned Leave
+                 //   case 'CL':  // Casual Leave
+                        $dayValue = 1.0;
+                        break;
+                    case 'H/D': // Half Day
+                        $dayValue = 0.5;
+                        break;
+                    // Other statuses like 'A' (Absent), 'L' (Late), etc., will result in $dayValue = 0.0
+                }
+            }
+            // If no attendance record for the day, it doesn't count as a paid day.
+
+            $paidDaysCounted += $dayValue;
+           // echo ("worker_id: {$worker->id}, date: {$dateIterator->toDateString()}, status: {$status}, dayValue: {$dayValue}, paidDaysCounted: {$paidDaysCounted}, numberOfPaidDaysRequired: {$numberOfPaidDaysRequired}\n");
+
+            if ($paidDaysCounted >= $numberOfPaidDaysRequired) {
+                 $dateIterator->copy(); // Return the date when eligibility is met
+            }
+
+            $dateIterator->addDay();
+            $iterations++;
+        }
+
+
+        // If the loop finishes, it means eligibility is not yet met or will be on this $dateIterator (which is now the day after the last check)
+        // or the exact day if the loop broke due to $paidDaysCounted >= $numberOfPaidDaysRequired
+
+        echo  $dateIterator;
+
+    }
+
+
+
+
+
+}

@@ -1,0 +1,121 @@
+<x-app-layout>
+
+    <x-slot name="pageTitle">
+        {{ $pageTitle }}
+    </x-slot>
+
+    <!--begin::Post-->
+    <div class="post d-flex flex-column-fluid" id="kt_post">
+        <!--begin::Container-->
+        <div id="kt_content_container" class="container-xxl">
+
+
+            <table id="attendance_table" class="table table-row-bordered table-row-gray-600 align-middle gy-4 nowrap ">
+                <thead>
+                    <tr>
+                        <th class="text-dark fw-bolder text-hover-primary fs-6">
+                            Worker ID<br>&nbsp;
+                        </th>
+                        <th class="text-dark fw-bolder text-hover-primary fs-6">
+                            Worker Name<br>&nbsp;
+                        </th>
+                        @foreach ($datesInMonth as $date)
+                        @php
+                        $day = \Carbon\Carbon::parse($date)->format('D');
+                        @endphp
+                        @if ($day == "Sun")
+                        <!-- $classes = "text-white bg-danger text-hover-primary"; -->
+                        @php
+                        $classes = "text-white bg-danger text-hover-primary";
+                        @endphp
+                        @elseif ($date === $currentDate)
+                        @php
+                        $classes = "text-white bg-primary text-hover-primary";
+                        @endphp
+                        @else
+                        @php
+                        $classes = "text-dark text-hover-primary";
+                        @endphp
+                        @endif
+                        <th class="fs-6 fw-bolder {{ $classes }}">
+                            {{ \Carbon\Carbon::parse($date)->format('d M') }}
+                            <br>
+                            {{ \Carbon\Carbon::parse($date)->format('D') }}
+                        </th>
+                        @endforeach
+                    </tr>
+                </thead>
+            </table>
+
+
+        </div>
+        <!--end::Container-->
+    </div>
+    <!--end::Post-->
+
+    <x-slot name="scripts">
+        <script>
+            $(document).ready(function() {
+                let columns = @json($columns);
+                var attendance_table = $("#attendance_table").DataTable({
+                    dom: '<"card"<"card-header"<"card-title"><"card-toolbar"<"datatable-buttons-container me-1"B>f<"toolbar-buttons">>>' +
+                        '<"card-body py-0 px-3"rt>' +
+                        '<"card-footer pt-5 pb-3"<"row"' +
+                        '<"col-sm-12 col-md-5 d-flex align-items-center justify-content-start mb-3 mb-md-0"li>' +
+                        '<"col-sm-12 col-md-7 d-flex align-items-center justify-content-start justify-content-md-end php-pagination-container"p>>>',
+                    buttons: [
+                        // {
+                        //     extend: 'excel',
+                        //     text: '<i class="fa-solid fa-file-excel"></i> Excel',
+                        //     className: 'btn-sm border border-primary',
+                        //     exportOptions: {
+                        //         columns: ':visible',
+                        //     },
+                        // }, 
+                    ],
+                    processing: true,
+                    serverSide: true,
+                    ajax: "{{ route('dashboard') }}",
+                    columns: columns,
+                    scrollX: true,
+                    scrollY: "60vh",
+                    scrollCollapse: true,
+                    fixedColumns: {
+                        left: 2,
+                        right: 0
+                    },
+                    columnDefs: [{
+                            "className": 'py-1 text-center',
+                            "targets": [0]
+                        },
+                        {
+                            "className": 'py-1 border-end border-secondary td-border-left text-center',
+                            "targets": [1]
+                        },
+                        {
+                            "className": 'py-1 text-center',
+                            "targets": '_all'
+                        },
+                    ],
+                    lengthMenu: [
+                        [10, 25, 50, 100, -1], // The actual values
+                        [10, 25, 50, 100, "All"] // The labels displayed
+                    ],
+                    pageLength: 10,
+                    // paging: false,
+                    language: {
+                        processing: "<div>Loading data, please wait...</div>",
+                    },
+                    oLanguage: {
+                        sSearch: ""
+                    },
+                });
+
+                $('#attendance_table_wrapper > .card > .card-header > .card-title').replaceWith(
+                    '<h3 class="card-title">Attendance</h3>'
+                );
+            })
+        </script>
+    </x-slot>
+
+</x-app-layout>

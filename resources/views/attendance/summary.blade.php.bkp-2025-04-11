@@ -1,0 +1,277 @@
+<x-app-layout>
+
+    <x-slot name="pageTitle">
+        {{ $pageTitle }}
+    </x-slot>
+
+    <!--begin::Post-->
+    <div class="post d-flex flex-column-fluid" id="kt_post">
+        <!--begin::Container-->
+        <div id="kt_content_container" class="container-fluid">
+
+            <style>
+                /* .form-floating .select2-selection {
+                    height: calc(2.5rem + 2px) !important;
+                } */
+            </style>
+            <form id="filter_form" class="card mb-3" method="GET" action="{{route('attendance.summary')}}">
+                <div class="card-body">
+                    <div class="row">
+
+                        @if (!$user->hasRole('PSP'))
+                        <div class="col-lg-2 col-md-3">
+                            <div class="form-floating">
+                                <select name="psp" id="psp" class="form-select form-select-sm" data-control="select2"
+                                    data-placeholder="Select PSP" data-allow-clear="true">
+                                    <option value="all" {{ request('psp')=='all' ? 'selected' : '' }}>All PSP</option>
+                                    @foreach ($psps as $psp)
+                                    <option value="{{$psp->id}}" <?= @$_REQUEST['psp'] == $psp->id ? 'selected' : '' ?>>{{$psp->name}}</option>
+                                    @endforeach
+                                </select>
+                                <label for="psp" class="form-label">PSP</label>
+                            </div>
+                        </div>
+                        @endif
+
+                        <div class="col-lg-2 col-md-3">
+                            <div class="form-floating">
+                                <select name="workers[]" id="workers" class="form-select form-select-sm"
+                                    data-control="select2" data-placeholder="All workers" data-allow-clear="true"
+                                    multiple>
+                                    <option value="all" {{ in_array('all', (array) request('workers')) || empty( (array) request('workers')) ? 'selected' : '' }}>All Workers</option>
+                                    @foreach ($workers as $worker)
+                                    <option value="{{ $worker->id }}" {{ in_array($worker->id, (array) request('workers')) ? 'selected' : '' }}> {{ $worker->name }} ({{$worker->code}}) </option>
+                                    @endforeach
+                                </select>
+                                <label for=" workers" class="form-label">workers</label>
+                            </div>
+                        </div>
+
+                        {{--
+                        <div class="col-lg-2 col-md-3">
+                            <div class="form-floating">
+                                <select name="shift" id="shift" class="form-select form-select-sm"
+                                    data-control="select2" data-placeholder="Select Shift" data-allow-clear="true">
+                                    <option value="all" {{ request('shift')=='all' ? 'selected' : '' }}>All Shifts
+                        </option>
+                        @foreach ($shifts as $shift)
+                        <option value="{{ $shift->id }}" {{ request('shift')==$shift->id ? 'selected' : '' }}>{{ $shift->name }}</option>
+                        @endforeach
+                        </select>
+                        <label for="shift" class="form-label">Shift</label>
+                    </div>
+                </div>
+                --}}
+
+
+                <div class="col-lg-2 col-md-3">
+                    <div class="form-floating">
+                        <select name="shift_type" id="shift_type" class="form-select form-select-sm"
+                            data-control="select2" data-placeholder="Select Shift Type" data-allow-clear="true">
+                            <option value="all" {{ request('shift_type')=='all' ? 'selected' : '' }}>Day + Night</option>
+                            <option value="day" {{ request('shift_type')=='day' ? 'selected' : '' }}>Day</option>
+                            <option value="night" {{ request('shift_type')=='night' ? 'selected' : '' }}>Night</option>
+                        </select>
+                        <label for="shift" class="form-label">Shift Type</label>
+                    </div>
+                </div>
+
+
+
+
+                <div class="col-lg-2 col-md-3">
+                    <div class="form-floating">
+                        <select name="employment_status" id="employment_status" class="form-select form-select-sm"
+                            data-control="select2" data-placeholder="Select status" data-allow-clear="true">
+                            <option value="all" {{ request('employment_status')=='all' ? 'selected' : '' }}>All</option>
+                            <option value="active" {{ request('employment_status')=='active' ? 'selected' : '' }}>Active</option>
+                            <option value="non-active" {{ request('employment_status')=='non-active' ? 'selected' : '' }}>Non Active</option>
+                        </select>
+                        <label for="shift" class="form-label">Status</label>
+                    </div>
+                </div>
+
+
+                <div class="col-lg-2 col-md-3">
+                    <div class="form-floating-flatpickr">
+                        <div class="input-group input-group-flatpicker" id="date_range_picker" data-wrap="true">
+                            <input type="text" id="date_range" class="form-control form-control-sm"
+                                name="date_range"
+                                value="{{ $date_range }}"
+                                placeholder="YYYY-MM-DD to YYYY-MM-DD" data-input data-open>
+                            <span class="input-group-text cursor-pointer" data-toggle>
+                                <i class="far fa-calendar-alt"></i>
+                            </span>
+                        </div>
+                        <label class="required form-label">Date Range</label>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-3">
+                    <div class="form-floating">
+                        <button type="submit" id="filter_form_submit"
+                            class="btn btn-primary btn-sm">Filter</button>
+                    </div>
+                </div>
+        </div>
+    </div>
+    </form>
+
+    <table id="workerSummaryTable"
+        class="table table-row-bordered table-row-gray-600 align-middle gy-1 nowrap ">
+        <thead>
+            <tr>
+                @foreach($workerSummaryColumns as $col)
+                <th class="text-dark fw-bolder text-hover-primary fs-6">
+                    {!! $col['title'] !!}
+                </th>
+                @endforeach
+            </tr>
+        </thead>
+    </table>
+
+    </div>
+    <!--end::Container-->
+    </div>
+    <!--end::Post-->
+
+    <x-slot name="scripts">
+        <script src="{{ asset('js/autoscroll-datatable.js') }}"></script>
+
+        <script>
+            $(document).ready(function() {
+                // $('#yearmonth_picker').flatpickr({
+                //     altInput: true,
+                //     plugins: [
+                //         new monthSelectPlugin({
+                //             shorthand: true,
+                //             dateFormat: "Y-m",
+                //             altFormat: "M Y",
+                //             altInputClass: "form-control form-control-sm",
+                //             theme: "dark",
+                //         })
+                //     ]
+                // });
+
+                $('#date_range_picker').flatpickr({
+                    altInput: true,
+                    mode: "range",
+                    dateFormat: "Y-m-d",
+                    altFormat: "d M Y",
+                    altInputClass: "form-control form-control-sm",
+                    maxDate: "today"
+                });
+
+                $(document).on('change', 'form#filter_form select#psp', function() {
+                    getFilteredWorkers();
+                });
+
+                function getFilteredWorkers() {
+                    let selectedWorkerId = new URLSearchParams(window.location.search).get("workers");
+                    $.ajax({
+                        url: "{{ route('attendance.get-filtered-workers') }}",
+                        type: "GET",
+                        data: {
+                            psp: $("form#filter_form select#psp").val()
+                        },
+                        success: function(response) {
+                            let workersDropdown = $('form#filter_form select#workers');
+                            workersDropdown.empty();
+                            workersDropdown.append('<option value="all">All Workers</option>');
+
+                            $.each(response, function(index, worker) {
+                                let selected = (worker.id == selectedWorkerId) ? "selected" : "";
+                                workersDropdown.append('<option value="' + worker.id + '" ' + selected + '>' + worker.name + ' (' + worker.code + ')</option>');
+                            });
+                        },
+                        error: function(xhr, status, error) {
+                            console.log("Error fetching workers: ", error);
+                        }
+                    });
+                }
+            });
+
+            $(document).ready(function() {
+
+                var userIsPSP = <?php echo (bool) $user->hasRole('PSP') ? 'true' : 'false'; ?>;
+
+                let workerSummaryColumns = [
+                    <?php
+                    foreach ($workerSummaryColumns as $col) {
+                        echo "{ data: '" . $col['data'] . "', name: '" . $col['name'] . "' },";
+                    }
+                    ?>
+                ];
+
+                var workerSummaryTable = $("#workerSummaryTable").DataTable({
+                    dom: '<"card mb-5"<"card-header"<"card-title"><"card-toolbar"<"datatable-buttons-container me-1"B><"toolbar-buttons">>><"card-body position-relative py-0 px-3"rt><"card-footer pt-5 pb-3"<"row"<"col-sm-12 col-md-5 d-flex align-items-center justify-content-start mb-3 mb-md-0"li><"col-sm-12 col-md-7 d-flex align-items-center justify-content-start justify-content-md-end php-pagination-container"p>>>>',
+                    buttons: (userIsPSP ? [] : [{
+                        extend: 'excelHtml5',
+                        title: '',
+                        text: '<i class="fa-solid fa-file-excel"></i> Excel',
+                        className: 'btn-sm border border-primary',
+                    }, ]),
+                    processing: true,
+                    serverSide: true,
+                    ajax: {
+                        url: "{{ route('attendance.get-sumamry') }}",
+                        type: "POST",
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // Add CSRF token
+                        },
+                        data: function(d) {
+                            d.filter_psp = $('#filter_form #psp').val();
+                            d.filter_workers = $('#filter_form #workers').val();
+                            // d.filter_shift = $('#filter_form #shift').val();
+                            d.filter_shift_type = $('#filter_form #shift_type').val();
+                            // d.filter_yearmonth = $('#filter_form #yearmonth').val();
+                            d.filter_date_range = $('#filter_form #date_range').val();
+                            d.filter_employment_status = $('#filter_form #employment_status').val();
+                        }
+                    },
+                    columns: workerSummaryColumns,
+                    scrollX: true,
+                    scrollY: "60vh",
+                    scrollCollapse: true,
+                    language: {
+                        processing: "<div>Loading data, please wait...</div>",
+                    },
+                    oLanguage: {
+                        sSearch: ""
+                    },
+                    lengthMenu: [
+                        userIsPSP ? [10, 25, 50, 100, -1] : [10, 25, 50, 100, -1],
+                        ['10 Workers', '25 Workers', '50 Workers', '100 Workers', "All Workers"]
+                    ],
+                    pageLength: userIsPSP ? 10 : 50,
+                    columnDefs: [{
+                            "className": 'text-danger text-center',
+                            "targets": [16]
+                        },
+                        {
+                            "className": 'text-center',
+                            "targets": '_all'
+                        },
+                    ],
+                    createdRow: function(row, data, dataIndex) {
+                        if (data.total_missed_punch > 0) {
+                            $(row).css('background-color', '#ffcccc');
+                        }
+                    },
+                    order: [
+                        [16, 'desc']
+                    ],
+                    fixedColumns: {
+                        left: 3,
+                        right: 0
+                    },
+                });
+
+                $('#workerSummaryTable_wrapper > .card > .card-header > .card-title').replaceWith(
+                    '<h3 class="card-title"><?= $tableTitle ?></h3>'
+                );
+            })
+        </script>
+    </x-slot>
+
+</x-app-layout>
