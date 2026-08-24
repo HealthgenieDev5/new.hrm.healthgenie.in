@@ -50,7 +50,6 @@
                         <div class="col-4 col-lg-2 col-md-3">
                             @php
                                 $employment_statuses = collect([
-                                    (object) ['id' => 'all', 'name' => 'All Status'],
                                     (object) ['id' => 'active', 'name' => 'Active'],
                                     (object) ['id' => 'non-active', 'name' => 'Non Active'],
                                 ]);
@@ -58,7 +57,8 @@
                             <div class="mb-5">
                                 <x-floating-select-input id="employment_status" name="employment_status"
                                     class="form-select form-select-sm" label="Status" :options="$employment_statuses"
-                                    :value="request('employment_status') ?? 'active'" placeholder="Select status" data-allow-clear="true" />
+                                    :value="request('employment_status') ?? 'active'" placeholder="Select status" data-allow-clear="true"
+                                    include_blank />
                             </div>
                         </div>
 

@@ -55,6 +55,16 @@ class WorkerAttendanceRepository implements WorkerAttendanceRepositoryInterface
             });
         }
 
+        // if ($request->filled('filter_employment_status')) {
+        //     if ($request->filter_employment_status === 'active') {
+        //         $workersQuery->where('employment_status', 'active');
+        //     } elseif ($request->filter_employment_status === 'non-active') {
+        //         $workersQuery->where('employment_status', '!=', 'active');
+        //     } elseif ($request->filter_employment_status === 'all') {
+        //         $workersQuery->whereIn('employment_status', ['Active','Left','Terminated','Absconded','Retired','Under Resignation']);
+        //     }
+        // }
+
         if ($request->filled('filter_employment_status') && $request->filter_employment_status !== 'all') {
             if ($request->filter_employment_status === 'active') {
                 $workersQuery->where('employment_status', 'active');
@@ -62,6 +72,8 @@ class WorkerAttendanceRepository implements WorkerAttendanceRepositoryInterface
                 $workersQuery->where('employment_status', '!=', 'active');
             }
         }
+
+        // When filter_employment_status is not provided or is 'all', show both active and non-active workers
 
         $filters = [
             'filter_psp' => 'psp_id',

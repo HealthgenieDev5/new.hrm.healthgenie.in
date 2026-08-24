@@ -20,6 +20,7 @@ class WorkerRetentionController extends Controller
 
     public function index(Request $request)
     {
+
         $startDate = null;
         $endDate = null;
         if ($request->filled('date_range')) {
@@ -29,7 +30,6 @@ class WorkerRetentionController extends Controller
                 $endDate = $dates[1];
             }
         }
-
         $today = Carbon::today();
 
         // Get all PSPs
@@ -46,6 +46,8 @@ class WorkerRetentionController extends Controller
                 ->get();
         }
 
+
+
         $activeGroups = RetentionGroup::where('type', 'active')->orderBy('min')->get();
         $leftGroups = RetentionGroup::where('type', 'left')->orderBy('min')->get();
 
@@ -53,6 +55,7 @@ class WorkerRetentionController extends Controller
 
         foreach ($psps as $psp) {
             $workers = $psp->workers
+                ->whereNotNull('date_of_joining')
                 ->when(
                     $startDate && $endDate,
                     fn($collection) => $collection->where('date_of_joining', '>=', Carbon::parse($startDate)->toDateString())
@@ -69,7 +72,8 @@ class WorkerRetentionController extends Controller
             $activeStats = [];
             foreach ($activeGroups as $group) {
                 $count = $activeWorkers->filter(function ($worker) use ($group, $today) {
-                    $joiningDate = $worker->date_of_joining ?? $worker->created_at;
+                    //$joiningDate = $worker->date_of_joining ?? $worker->created_at;
+                    $joiningDate = $worker->date_of_joining;
                     $days = Carbon::parse($joiningDate)->diffInDays($today);
                     return $days >= $group->min && $days <= $group->max;
                 })->count();
@@ -86,7 +90,8 @@ class WorkerRetentionController extends Controller
             $leftStats = [];
             foreach ($leftGroups as $group) {
                 $count = $leftWorkers->filter(function ($worker) use ($group) {
-                    $joiningDate = $worker->date_of_joining ?? $worker->created_at;
+                    //$joiningDate = $worker->date_of_joining ?? $worker->created_at;
+                    $joiningDate = $worker->date_of_joining;
                     $days = Carbon::parse($joiningDate)->diffInDays(Carbon::parse($worker->date_of_leaving));
                     return $days >= $group->min && $days <= $group->max;
                 })->count();
@@ -107,8 +112,6 @@ class WorkerRetentionController extends Controller
         }
 
         $pageTitle = "Retention Report";
-
-
         if ($request->filled('psp') && $request->psp !== 'all') {
             $selectedPsp = Psp::find($request->psp);
             if ($selectedPsp) {
@@ -119,8 +122,6 @@ class WorkerRetentionController extends Controller
         if ($startDate && $endDate) {
             $pageTitle .= ' (' . date('d M Y', strtotime($startDate)) . ' to ' . date('d M Y', strtotime($endDate)) . ')';
         }
-
-
         $allGroups = RetentionGroup::orderBy('type')->orderBy('min')->get();
 
         $psps = Psp::all()->map(function ($psp) {
@@ -129,8 +130,8 @@ class WorkerRetentionController extends Controller
                 'name' => $psp->name
             ];
         });
-
-        $date_range = $request->input('date_range') ?? date('Y-m-01') . ' to ' . date('Y-m-d');
+        $attendanceFrom = '2025-01-01';
+        $date_range = $request->input('date_range') ?? $attendanceFrom . ' to ' . date('Y-m-d');
 
         $user = $this->user;
 

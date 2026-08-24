@@ -32,6 +32,7 @@
                                 </div>
                                 <small class="text-danger d-block" id="father_name_error">{{ $errors->first('father_name') ?? '' }}</small>
                             </div>
+
                             <!-- <div>
                                 <div class="form-floating">
                                     <input type="text" class="form-control {{$errors->has('husband_name') ? 'is-invalid' : '' }}" name="husband_name" id="husband_name" value="{{ old('husband_name') }}" placeholder="" />
@@ -39,7 +40,8 @@
                                 </div>
                                 <small class="text-danger d-block" id="husband_name_error">{{ $errors->first('husband_name') ?? '' }}</small>
                             </div> -->
-                            <div>
+
+                            <!-- <div>
                                 <div class="form-floating">
                                     <select name="shift_id" id="shift_id" class="form-select {{$errors->has('shift_id') ? 'is-invalid' : '' }}" data-control="select2"
                                         data-placeholder="Select Shift">
@@ -53,7 +55,8 @@
                                     <label for="shift_id" class="required form-label">Shift</label>
                                 </div>
                                 <small class="text-danger d-block" id="shift_id_error">{{ $errors->first('shift_id') ?? '' }}</small>
-                            </div>
+                            </div> -->
+
                             <div>
                                 <div class="form-floating">
                                     <input type="text" name="mobile_number" value="{{ old('mobile_number', $worker->mobile_number) }}"
@@ -374,14 +377,16 @@
                     // } else {
                     //     $("#religion_error").html("");
                     // }
-                    if (!shift_id.val() || shift_id.val().length === 0) {
-                        $("#shift_id_error").html("Please select shift before submitting.");
-                        $(shift_id).parent().find('.select2-selection').addClass('is-invalid');
-                        form_validated = false;
-                        e.preventDefault();
-                    } else {
-                        $("#shift_id_error").html("");
-                    }
+
+                    // if (!shift_id.val() || shift_id.val().length === 0) {
+                    //     $("#shift_id_error").html("Please select shift before submitting.");
+                    //     $(shift_id).parent().find('.select2-selection').addClass('is-invalid');
+                    //     form_validated = false;
+                    //     e.preventDefault();
+                    // } else {
+                    //     $("#shift_id_error").html("");
+                    // }
+
                     if (!gender.val() || gender.val().length === 0) {
                         $("#gender_error").html("Please select gender before submitting.");
                         $(gender).parent().find('.select2-selection').addClass('is-invalid');
@@ -390,13 +395,15 @@
                     } else {
                         $("#gender_error").html("");
                     }
-                    if (!marital_status.val() || marital_status.val().length === 0) {
-                        $("#marital_status_error").html("Please select marital status before submitting.");
-                        form_validated = false;
-                        e.preventDefault();
-                    } else {
-                        $("#marital_status_error").html("");
-                    }
+
+                    // if (!marital_status.val() || marital_status.val().length === 0) {
+                    //     $("#marital_status_error").html("Please select marital status before submitting.");
+                    //     form_validated = false;
+                    //     e.preventDefault();
+                    // } else {
+                    //     $("#marital_status_error").html("");
+                    // }
+
                     // if (!mobile_number.val() || mobile_number.val().length === 0) {
                     //     $("#mobile_number_error").html("Please Enter Adhar number before submitting.");
                     //     form_validated = false;
@@ -421,12 +428,12 @@
                     }
 
 
-                    // if ((marital_status.val() == 'Married' && gender.val() == 'female') && (!husband_name.val() || husband_name.val().length === 0)) {
-                    //     $("#husband_name_error").html("Please enter Husband Name.");
-                    //     form_validated = false;
-                    // } else {
-                    //     $("#husband_name_error").html("");
-                    // }
+                    if ((marital_status.val() == 'Married' && gender.val() == 'female') && (!husband_name.val() || husband_name.val().length === 0)) {
+                        $("#husband_name_error").html("Please enter Husband Name.");
+                        form_validated = false;
+                    } else {
+                        $("#husband_name_error").html("");
+                    }
 
 
 

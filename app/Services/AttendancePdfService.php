@@ -17,6 +17,30 @@ class AttendancePdfService
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
 
+        // Resolve year/month and date range bounds first so worker filter can use them
+        $yearMonth = $request->yearmonth;
+        if ($yearMonth) {
+            [$year, $month] = explode('-', $yearMonth);
+        } else {
+            $year = Carbon::now()->year;
+            $month = Carbon::now()->month;
+        }
+        $daysInMonth    = Carbon::createFromDate($year, $month, 1)->daysInMonth;
+        $fullMonthStart = Carbon::create($year, $month, 1)->toDateString();
+        $fullMonthEnd   = Carbon::create($year, $month, $daysInMonth)->toDateString();
+
+        $dateRange = $request->date_range;
+        if ($dateRange && str_contains($dateRange, ' to ')) {
+            [$rangeStart, $rangeEnd] = explode(' to ', $dateRange);
+            $rangeStart = Carbon::parse($rangeStart)->toDateString();
+            $rangeEnd   = Carbon::parse($rangeEnd)->toDateString();
+        } else {
+            $rangeStart = $fullMonthStart;
+            $rangeEnd   = $fullMonthEnd;
+        }
+
+        $isFullMonth = ($rangeStart === $fullMonthStart && $rangeEnd === $fullMonthEnd);
+
         $workersQuery = Worker::query();
 
         if ($request->psp && $request->psp != 'all') {
@@ -31,41 +55,44 @@ class AttendancePdfService
             $workersQuery->where('psp_id', $user->psp->id);
         }
 
-        if ($request->employment_status && $request->employment_status == 'Working') {
+        if ($request->employment_status == 'Working') {
             $workersQuery->where('employment_status', '!=', 'Left');
-        } elseif ($request->employment_status && $request->employment_status != 'Working') {
+        } elseif ($request->employment_status && $request->employment_status != 'Active') {
+            // Left, Abscond, Under Resignation — filter by status only
             $workersQuery->where('employment_status', $request->employment_status);
         } else {
-            $workersQuery->where('employment_status', 'Active');
+            // Active (default): employment_status = Active AND employed within the date range
+            // $workersQuery->where('employment_status', 'Active')->activeBetween($rangeStart, $rangeEnd);
+            $workersQuery->activeBetween($rangeStart, $rangeEnd);
         }
 
         $ajaxWorkers = $workersQuery->orderBy('code', 'asc')->get();
 
+        // dd([
+        //     'rangeStart'=>$rangeStart,
+        //     'rangeEnd'=>$rangeEnd,
+        //     'ajaxWorkers'=>$ajaxWorkers,
+        // ]);
+
         $workerEmpcodes = $ajaxWorkers?->pluck('id');
 
-        #Begin:: get from request, if not then current month
-        $yearMonth = $request->yearmonth;
-        if ($yearMonth) {
-            [$year, $month] = explode('-', $yearMonth);
-        } else {
-            $year = Carbon::now()->year;
-            $month = Carbon::now()->month;
-        }
-        $daysInMonth = Carbon::createFromDate($year, $month, 1)->daysInMonth;
         $datesInMonth = collect();
-        for ($i = 1; $i <= $daysInMonth; $i++) {
-            $datesInMonth->push(Carbon::create($year, $month, $i)->toDateString());
+        $current = Carbon::parse($rangeStart);
+        $end = Carbon::parse($rangeEnd);
+        while ($current->lte($end)) {
+            $datesInMonth->push($current->toDateString());
+            $current->addDay();
         }
+        $daysInRange = $datesInMonth->count();
 
         #End:: get from request, if not then current month
         $attendanceRecords = ProcessedAttendance::whereIn('worker_id', $workerEmpcodes)
-            ->whereYear('date', $year)
-            ->whereMonth('date', $month)
+            ->whereBetween('date', [$rangeStart, $rangeEnd])
             ->orderBy('date', 'ASC')
             ->get()
             ->groupBy('worker_id');
 
-        $data = $ajaxWorkers->map(function ($worker) use ($attendanceRecords, $daysInMonth) {
+        $data = $ajaxWorkers->map(function ($worker) use ($attendanceRecords, $daysInMonth, $daysInRange) {
             $attendanceRecordsOfThisWorker = $attendanceRecords[$worker->id] ?? false;
 
             $WorkerAttendanceServiceHelper = new WorkerAttendanceServiceHelper();
@@ -99,13 +126,13 @@ class AttendancePdfService
             $newWeekOffCount = $totalIsWeekOff - $sandwichOnWeekOff;
             $newTotalWorkingDays = $totalWorkingDays - ($presentOnWeekOff + $halfDayOnWeekOff / 2); // We are currently not deducting any RH or HL at this point, Santu has promised me that he will help me calculate this, later in Feb 2025 only;
             $newTotalPaidDays = $newTotalWorkingDays + $newWeekOffCount + $total_holiday_and_rh;
-            $newDeductionDays = $daysInMonth - $newTotalPaidDays;
+            $newDeductionDays = $daysInRange - $newTotalPaidDays;
 
             return [
                 'worker' => $worker,
                 'attendance' => $attendanceRecordsOfThisWorker,
                 'summary' => [
-                    'days_in_month' => $daysInMonth,
+                    'days_in_month' => $daysInRange,
                     'totalWorkingDays' => $totalWorkingDays,
                     'total_week_off' => $total_week_off,
                     'total_holiday_and_rh' => $total_holiday_and_rh,
@@ -122,6 +149,11 @@ class AttendancePdfService
             ];
         });
 
-        return $data;
+        return [
+            'workers'     => $data,
+            'isFullMonth' => $isFullMonth,
+            'rangeStart'  => $rangeStart,
+            'rangeEnd'    => $rangeEnd,
+        ];
     }
 }

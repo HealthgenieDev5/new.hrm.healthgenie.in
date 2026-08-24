@@ -408,8 +408,8 @@ class AttendanceSummaryService
 
         // Week Off (W/O or HL)
         $attendanceAggregationQuery
-            ->selectRaw("SUM(CASE WHEN shift_type = 'day' AND status IN ('W/O', 'HL') THEN 1 ELSE 0 END) as week_off_day")
-            ->selectRaw("SUM(CASE WHEN shift_type = 'night' AND status IN ('W/O', 'HL') THEN 1 ELSE 0 END) as week_off_night");
+            ->selectRaw("SUM(CASE WHEN shift_type = 'day' AND status IN ('W/O', 'HL', 'NH') THEN 1 ELSE 0 END) as week_off_day")
+            ->selectRaw("SUM(CASE WHEN shift_type = 'night' AND status IN ('W/O', 'HL', 'NH') THEN 1 ELSE 0 END) as week_off_night");
 
         $attendanceAggregation = $attendanceAggregationQuery->first();
 

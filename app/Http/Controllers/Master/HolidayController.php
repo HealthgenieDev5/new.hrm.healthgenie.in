@@ -3,11 +3,8 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
-
-use App\Models\Holiday;
-use App\Http\Requests\StoreHolidayRequest;
-use App\Http\Requests\UpdateHolidayRequest;
 use App\Models\Division;
+use App\Models\Holiday;
 use App\Models\Worker;
 use Illuminate\Http\Request;
 
@@ -20,6 +17,7 @@ class HolidayController extends Controller
     {
         $pageTitle = 'Manage Holidays';
         $holidays = Holiday::paginate(10);
+
         return view('master.holidays.index', compact('holidays', 'pageTitle'));
     }
 
@@ -29,6 +27,7 @@ class HolidayController extends Controller
     public function create()
     {
         $pageTitle = 'Create Holiday';
+
         return view('master.holidays.create', compact('pageTitle'));
     }
 
@@ -63,10 +62,26 @@ class HolidayController extends Controller
     {
         $pageTitle = 'Edit Holiday';
         $divisions = Division::all();
-        $workers = Worker::all();
-        $workers = Worker::where('employment_status', 'Active')->get();
+        $workers = collect();
 
-        // dd($division->Workercount);
+        // Only fetch workers for SPL HL holidays
+        if ($holiday->code == 'SPL HL') {
+            // Fetch active workers grouped by division
+            $workers = Worker::active()
+                ->with('division')
+                ->orderBy('division_id')
+                ->orderBy('name')
+                ->get()
+                ->groupBy(fn ($worker) => $worker->division_id ?? 0);
+
+            // Reorder to put "Other" (division_id = 0) at the end
+            if ($workers->has(0)) {
+                $other = $workers->get(0);
+                $workers->forget(0);
+                $workers->put(0, $other);
+            }
+        }
+
         return view('master.holidays.edit', compact('holiday', 'pageTitle', 'divisions', 'workers'));
     }
 
@@ -77,7 +92,7 @@ class HolidayController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'date' => 'required|date|unique:holidays,date,' . $holiday->id,
+            'date' => 'required|date|unique:holidays,date,'.$holiday->id,
             'code' => ['required', 'string', 'in:HL,NH,RH,SPL HL'],
             'workers' => ['nullable', 'array'], // Validate workers as an array
             'workers.*' => ['exists:workers,id'], // Ensure each worker ID exists in the workers table

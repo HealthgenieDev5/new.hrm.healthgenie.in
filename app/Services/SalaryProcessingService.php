@@ -122,8 +122,11 @@ class SalaryProcessingService implements SalaryProcessingServiceInterface
         #Deductions (PF, ESI)
         $pf_employee = $salaryStructure->pf_allowed ? min(15000, $basic) * 0.12 : 0;
         $pf_employer = $salaryStructure->pf_allowed ? min(15000, $basic) * 0.13 : 0;
-        $esic_employee = $salaryStructure->esic_allowed ? $gross * 0.0075 : 0;
-        $esic_employer = $salaryStructure->esic_allowed ? $gross * 0.0325 : 0;
+        // $esic_employee = $salaryStructure->esic_allowed ? $gross * 0.0075 : 0;
+        // $esic_employer = $salaryStructure->esic_allowed ? $gross * 0.0325 : 0;
+        // Updated on 06 May asked by Santu sir based on ESIC rules that if the basic is more than 21000 then no ESIC will be deducted and From April 2026, the esic will be deducted on basic salary instead of gross salary and the maximum basic salary limit for ESIC deduction will be 21000. So, I have updated the code as per the new rules.
+        $esic_employee = $salaryStructure->esic_allowed ? min(21000, $basic) * 0.0075 : 0;
+        $esic_employer = $salaryStructure->esic_allowed ? min(21000, $basic) * 0.0325 : 0;
 
         #Bonus Calculation
         $bonus = $salaryStructure->bonus_allowed ? ($worker?->workertype?->minimum_wage ?? 0) * 0.0833 : 0;

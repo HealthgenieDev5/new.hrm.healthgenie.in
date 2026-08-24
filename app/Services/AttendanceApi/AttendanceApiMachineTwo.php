@@ -38,26 +38,67 @@ class AttendanceApiMachineTwo
                 $data = $response->json();
 
                 if ($data) {
+                    // foreach ($data['InOutPunchData'] ?? [] as $record) {
+                    //     Attendance::updateOrCreate(
+                    //         [
+                    //             'empcode' => $record['Empcode'],
+                    //             'date' => Carbon::createFromFormat('d/m/Y', $record['DateString'])->format('Y-m-d'),
+                    //             'shift_type' => 'night',
+                    //         ],
+                    //         [
+                    //             'intime' => $record['INTime'] !== '--:--' ? $record['INTime'] : null,
+                    //             'outtime' => $record['OUTTime'] !== '--:--' ? $record['OUTTime'] : null,
+                    //             'work_time' => $record['WorkTime'],
+                    //             'over_time' => $record['OverTime'],
+                    //             'break_time' => $record['BreakTime'],
+                    //             'status' => $record['Status'],
+                    //             'remark' => $record['Remark'],
+                    //             'early_out' => $record['Erl_Out'],
+                    //             'late_in' => $record['Late_In'],
+                    //             'name' => $record['Name'],
+                    //         ]
+                    //     );
+                    // }
+
+                    $attendanceRecords = [];
+
                     foreach ($data['InOutPunchData'] ?? [] as $record) {
-                        Attendance::updateOrCreate(
-                            [
-                                'empcode' => $record['Empcode'],
-                                'date' => Carbon::createFromFormat('d/m/Y', $record['DateString'])->format('Y-m-d'),
-                                'shift_type' => 'night',
-                            ],
-                            [
-                                'intime' => $record['INTime'] !== '--:--' ? $record['INTime'] : null,
-                                'outtime' => $record['OUTTime'] !== '--:--' ? $record['OUTTime'] : null,
-                                'work_time' => $record['WorkTime'],
-                                'over_time' => $record['OverTime'],
-                                'break_time' => $record['BreakTime'],
-                                'status' => $record['Status'],
-                                'remark' => $record['Remark'],
-                                'early_out' => $record['Erl_Out'],
-                                'late_in' => $record['Late_In'],
-                                'name' => $record['Name'],
-                            ]
-                        );
+                        $shiftType = 'night';
+                        $attendanceRecords[] = [
+                            'empcode' => $record['Empcode'],
+                            'date' => Carbon::createFromFormat('d/m/Y', $record['DateString'])->format('Y-m-d'),
+                            'shift_type' => $shiftType,
+                            'intime' => $record['INTime'] !== '--:--' ? $record['INTime'] : null,
+                            'outtime' => $record['OUTTime'] !== '--:--' ? $record['OUTTime'] : null,
+                            'work_time' => $record['WorkTime'],
+                            'over_time' => $record['OverTime'],
+                            'break_time' => $record['BreakTime'],
+                            'status' => $record['Status'],
+                            'remark' => $record['Remark'],
+                            'early_out' => $record['Erl_Out'],
+                            'late_in' => $record['Late_In'],
+                            'name' => $record['Name'],
+                        ];
+                    }
+
+                    if (!empty($attendanceRecords)) {
+                        $totalRecords = count($attendanceRecords);
+                        $batchSize = 100;
+                        $processed = 0;
+
+                        $batches = array_chunk($attendanceRecords, $batchSize);
+
+                        foreach ($batches as $batch) {
+                            Attendance::upsert(
+                                $batch,
+                                ['empcode', 'date', 'shift_type'],
+                                ['intime', 'outtime', 'work_time', 'over_time', 'break_time', 'status', 'remark', 'early_out', 'late_in', 'name']
+                            );
+
+                            $processed += count($batch);
+                            echo "{$processed} of {$totalRecords} rows has been updated\n";
+                            Log::info("Machine 2: {$processed} of {$totalRecords} rows has been updated");
+                        }
                     }
                 }
                 Log::info('Machine 2 Attendance fetched and stored successfully.');

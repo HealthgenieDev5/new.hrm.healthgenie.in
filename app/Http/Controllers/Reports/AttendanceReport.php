@@ -52,19 +52,26 @@ class AttendanceReport extends Controller
     {
 
         $AttendancePdfService = new AttendancePdfService();
-        $pdfData = $AttendancePdfService->getPdfData($request);
+        $result = $AttendancePdfService->getPdfData($request);
 
         $data = [
-            'title' => 'Laravel DomPDF Example',
-            'date' => date('Y-m-d'),
-            'content' => 'This is a sample PDF generated in Laravel using DomPDF.',
-            'pdfData' => $pdfData
+            'title'      => 'Attendance Report',
+            'date'       => date('Y-m-d'),
+            'pdfData'    => $result['workers'],
+            'rangeStart' => $result['rangeStart'],
+            'rangeEnd'   => $result['rangeEnd'],
         ];
 
         # Load Blade View and Pass Data
         $pdf = Pdf::setPaper('A4', 'portrait');
 
-        $request->only_weekoff_working == 'yes' ? $pdf->loadView('reports.attendance-report.pdfsample2', $data) : $pdf->loadView('reports.attendance-report.pdfsample', $data);
+        if ($request->only_weekoff_working == 'yes') {
+            $pdf->loadView('reports.attendance-report.pdfsample2', $data);
+        } elseif (!$result['isFullMonth']) {
+            $pdf->loadView('reports.attendance-report.pdfsample-daterange', $data);
+        } else {
+            $pdf->loadView('reports.attendance-report.pdfsample', $data);
+        }
 
         # Return as Download
         return $pdf->download('sample.pdf');

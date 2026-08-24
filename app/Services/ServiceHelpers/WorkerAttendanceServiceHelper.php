@@ -133,7 +133,7 @@ class WorkerAttendanceServiceHelper
     public function getHolidayAndRhCount($allStatus)
     {
         return $allStatus ? count(array_filter($allStatus, function ($status) {
-            return in_array($status, ['HL', 'RH']);
+            return in_array($status, ['HL', 'RH', 'NH', 'SPL HL']);
         })) : 0;
     }
 
@@ -170,7 +170,7 @@ class WorkerAttendanceServiceHelper
     public function getPaidDaysCount($allStatus)
     {
         return $allStatus ? array_reduce($allStatus, function ($total, $status) {
-            if (in_array($status, ['P', 'W/O', 'HL', 'RH'])) {
+            if (in_array($status, ['P', 'W/O', 'HL', 'RH', 'NH'])) {
                 $total += 1; // Add 1 for full paid days
             } elseif ($status === 'H/D') {
                 $total += 0.5; // Add 0.5 for half days
@@ -333,5 +333,23 @@ class WorkerAttendanceServiceHelper
         }) : null;
         $grace_minutes = $attendanceOfTheDay?->grace_minutes ?? 0;
         return $attendanceOfTheDay ? $grace_minutes : "";
+    }
+
+    public function getTenthRowHtml($attendanceRecordsOfThisWorker, $date)
+    {
+        $attendanceOfTheDay = $attendanceRecordsOfThisWorker ? $attendanceRecordsOfThisWorker->first(function ($item) use ($date) {
+            return $item->date->toDateString() === $date;
+        }) : null;
+
+        return $attendanceOfTheDay && $attendanceOfTheDay?->in_time ? Carbon::parse($attendanceOfTheDay?->in_time)->format('h:i A') : "";
+    }
+
+    public function getEleventhRowHtml($attendanceRecordsOfThisWorker, $date)
+    {
+        $attendanceOfTheDay = $attendanceRecordsOfThisWorker ? $attendanceRecordsOfThisWorker->first(function ($item) use ($date) {
+            return $item->date->toDateString() === $date;
+        }) : null;
+
+        return $attendanceOfTheDay && $attendanceOfTheDay?->out_time ? Carbon::parse($attendanceOfTheDay?->out_time)->format('h:i A') : "";
     }
 }

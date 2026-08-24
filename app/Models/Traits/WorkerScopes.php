@@ -18,4 +18,10 @@ trait WorkerScopes
     }
 
     // Add more reusable scopes here later
+
+    public function scopeActive(Builder $query)
+    {
+        return $query->whereNull('date_of_leaving')
+            ->orWhere('date_of_leaving', '>=', now()->toDateString());
+    }
 }

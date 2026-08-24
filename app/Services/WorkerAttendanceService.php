@@ -129,9 +129,13 @@ class WorkerAttendanceService
 
             $totalCl          = $records?->where('status', 'CL')->count() ?? 0;
 
-            $totalWeekOff          = $records?->where('status', 'W/O')->count() ?? 0;
+            $totalWeekOff     = $records?->where('status', 'W/O')->count() ?? 0;
 
-            $totalHL          = $records?->where('status', 'HL')->count() ?? 0;
+            // $totalHL          = $records?->where('status', 'HL')->count() ?? 0;
+            // $totalHL          += $records?->where('status', 'NH')->count() ?? 0;
+            // $totalHL          += $records?->where('status', 'SPL HL')->count() ?? 0;
+            $totalHL = $records?->whereIn('status', ['HL', 'SPL HL', 'NH'])->count() ?? 0;
+
 
             $totalMissedPunch     = $records?->where('status', 'M/P')
                 ->reject(fn($record) => $record->date == Carbon::today())
@@ -457,6 +461,31 @@ class WorkerAttendanceService
         }
         $ninethRow['searchable_name'] = $worker->name . "|" . $worker->code;
 
+
+
+
+
+        #Tenth Row
+        $tenthRow = ['code' => "", 'name' => "", 'total_late_coming' => "", 'total_early_going' => "", 'total_grace' => "", 'total_present' => "", 'total_halfdays' => "", 'total_week_off' => "", 'total_holiday_and_rh' => "", 'total_missed_punch' => "", 'total_absent' => "", 'total_sandwich' => "", 'total_wrong_shifts' => "", 'total_paid_days' => "", 'total_present_on_week_off' => "", 'days_in_month' => ""];
+        $tenthRow['column_name'] = "Punch In Original";
+        foreach ($datesInMonth as $date) {
+            $tenthRow[$date] = $workerAttendanceServiceHelper->getTenthRowHtml($attendanceRecordsOfThisWorker, $date);
+        }
+        $tenthRow['searchable_name'] = $worker->name . "|" . $worker->code;
+
+        #Eleventh Row
+        $eleventhRow = ['code' => "", 'name' => "", 'total_late_coming' => "", 'total_early_going' => "", 'total_grace' => "", 'total_present' => "", 'total_halfdays' => "", 'total_week_off' => "", 'total_holiday_and_rh' => "", 'total_missed_punch' => "", 'total_absent' => "", 'total_sandwich' => "", 'total_wrong_shifts' => "", 'total_paid_days' => "", 'total_present_on_week_off' => "", 'days_in_month' => ""];
+        $eleventhRow['column_name'] = "Punch Out Original";
+        foreach ($datesInMonth as $date) {
+            $eleventhRow[$date] = $workerAttendanceServiceHelper->getEleventhRowHtml($attendanceRecordsOfThisWorker, $date);
+        }
+        $eleventhRow['searchable_name'] = $worker->name . "|" . $worker->code;
+
+
+
+
+
+        // return [$mainRow, $secondRow, $thirdRow, $fourthRow, $fifthRow, $sixthRow, $seventhRow, $eightthRow, $ninethRow, $tenthRow, $eleventhRow];
         return [$mainRow, $secondRow, $thirdRow, $fourthRow, $fifthRow, $sixthRow, $seventhRow, $eightthRow, $ninethRow];
     }
     /**

@@ -8,6 +8,8 @@
 
     </x-slot>
 
+     <x-flash-message />
+
     <!--begin::Post-->
     <div class="post d-flex flex-column-fluid" id="kt_post">
         <!--begin::Container-->
@@ -91,6 +93,28 @@
             </form>
             <!--end::Card-->
 
+            <!--begin::Datatable Card-->
+            <div class="card mt-5" id="shift_overrides_card" style="display: none;">
+                <div class="card-header">
+                    <h3 class="card-title">Existing Shift Overrides</h3>
+                </div>
+                <div class="card-body">
+                    <table id="shift_overrides_table" class="table table-row-dashed table-row-gray-300 align-middle gy-4">
+                        <thead>
+                            <tr>
+                                <th class="text-dark fw-bolder text-hover-primary fs-6">Worker</th>
+                                <th class="text-dark fw-bolder text-hover-primary fs-6">Shift</th>
+                                <th class="text-dark fw-bolder text-hover-primary fs-6">Start From</th>
+                                <th class="text-dark fw-bolder text-hover-primary fs-6">Ends On</th>
+                                <th class="text-dark fw-bolder text-hover-primary fs-6">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!--end::Datatable Card-->
 
         </div>
         <!--end::Container-->
@@ -108,6 +132,114 @@
                     altFormat: 'Y-m-d',
                     altInputClass: "form-control"
                 })
+
+                // Initialize DataTable
+                var shiftOverridesTable = null;
+
+                // Worker dropdown change event
+                $('#worker_id').on('change', function() {
+                    var workerId = $(this).val();
+
+                    if (workerId) {
+                        // Show the datatable card
+                        $('#shift_overrides_card').show();
+
+                        // Destroy existing datatable if it exists
+                        if (shiftOverridesTable) {
+                            shiftOverridesTable.destroy();
+                        }
+
+                        // Initialize datatable with worker filter
+                        shiftOverridesTable = $('#shift_overrides_table').DataTable({
+                            "processing": true,
+                            "serverSide": true,
+                            "ajax": {
+                                url: "{{ route('overrides.shiftoverride.getShiftOverrides') }}",
+                                type: "POST",
+                                headers: {
+                                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                                },
+                                data: function(d) {
+                                    d.worker_id = workerId;
+                                }
+                            },
+                            "columns": [
+                                {
+                                    data: 'worker_name',
+                                    name: 'worker_name'
+                                },
+                                {
+                                    data: 'shift_name',
+                                    name: 'shift_name'
+                                },
+                                {
+                                    data: 'start_date',
+                                    name: 'start_date'
+                                },
+                                {
+                                    data: 'end_date',
+                                    name: 'end_date'
+                                },
+                                {
+                                    data: 'action',
+                                    name: 'action',
+                                    orderable: false,
+                                    searchable: false
+                                }
+                            ],
+                            "order": [[2, 'desc']],
+                            "pageLength": 10,
+                            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                            "language": {
+                                "processing": "<div>Loading shift overrides...</div>",
+                                "emptyTable": "No shift overrides found for this worker",
+                                "zeroRecords": "No matching shift overrides found"
+                            }
+                        });
+                    } else {
+                        // Hide the datatable card if no worker is selected
+                        $('#shift_overrides_card').hide();
+
+                        // Destroy the datatable
+                        if (shiftOverridesTable) {
+                            shiftOverridesTable.destroy();
+                            shiftOverridesTable = null;
+                        }
+                    }
+                });
+
+                // Trigger change event on page load if worker is already selected
+                if ($('#worker_id').val()) {
+                    $('#worker_id').trigger('change');
+                }
+
+                // Delete shift override via AJAX
+                $(document).on('click', '.delete-shift-override', function() {
+                    if (confirm('Are you sure you want to delete this shift override?')) {
+                        var deleteBtn = $(this);
+                        var deleteUrl = deleteBtn.data('url');
+
+                        $.ajax({
+                            url: deleteUrl,
+                            type: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function(response) {
+                                // Reload the datatable
+                                if (shiftOverridesTable) {
+                                    shiftOverridesTable.ajax.reload();
+                                }
+
+                                // Show success message (you can customize this)
+                                alert('Shift Override deleted successfully.');
+                            },
+                            error: function(xhr) {
+                                alert('Error deleting shift override. Please try again.');
+                            }
+                        });
+                    }
+                });
             })
         </script>
     </x-slot>

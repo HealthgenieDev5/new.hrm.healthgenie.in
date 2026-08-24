@@ -114,7 +114,7 @@
                         "sSearch": ""
                     },
                     "order": [
-                        [2, 'asc']
+                        [0, 'asc']
                     ],
                     "scrollX": true,
                     "scrollY": "60vh",

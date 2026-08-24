@@ -173,7 +173,7 @@ class TenureBonusController extends Controller
         );
 
         $count = WorkerTenureBonus::whereIn('id', $bonusIds)
-            ->where('is_paid', 'pending')
+            ->where('is_paid', 'pending') // Only update pending bonuses
             ->update([
                 'is_paid' => 'no',
                 'paid_date' => null,

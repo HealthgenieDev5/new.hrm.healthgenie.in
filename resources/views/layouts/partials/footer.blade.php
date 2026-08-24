@@ -5,7 +5,7 @@
         <!--begin::Copyright-->
         <div class="text-dark order-2 order-md-1">
             <span class="text-muted fw-bold me-1">2025©</span>
-            <a href="https://heuerinternational.com" target="_blank" class="text-gray-800 text-hover-primary">Heuer International</a>
+            <a href="https://www.etimeoffice.com/" target="_blank" class="text-gray-800 text-hover-primary">Team Office</a>
         </div>
         <!--end::Copyright-->
     </div>

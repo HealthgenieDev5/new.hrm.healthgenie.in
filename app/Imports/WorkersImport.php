@@ -48,7 +48,7 @@ class WorkersImport implements ToModel, WithHeadingRow, WithCustomCsvSettings
         return new Worker([
             'code' => $row['emp_code'],
             'name' => $row['name'],
-            // 'father_name' => $row['father_s_name'] ?? null,
+            'father_name' => $row['father_s_name'],
             'date_of_birth' => $dateOfBirth,
             'date_of_joining' => $dateOfJoining,
             'adhar_number' => $row['aadhar_no'],
@@ -56,9 +56,9 @@ class WorkersImport implements ToModel, WithHeadingRow, WithCustomCsvSettings
             'esic_number' => $row['esic_no'],
             'gender' => $row['gender'],
             'marital_status' => $row['marital_status'],
-            'permanent_address' => $row['permanent_address'] ?? null,
-            'present_address' => $row['present_address'] ?? null,
-            'employment_status' => $row['status'] ?? 'Active',
+            'permanent_address' => $row['permanent_address'],
+            'present_address' => $row['present_address'],
+            'employment_status' => $row['status'],
             'psp_id' => $psp->id,
         ]);
     }

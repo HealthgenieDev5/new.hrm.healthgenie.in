@@ -37,6 +37,5 @@ Route::prefix('reports')->name('reports.')->group(function () {
             Route::post('/mark-as-paid-bulk', [TenureBonusController::class, 'markAsPaidBulk'])->name('mark-paid-bulk');
             Route::post('/{bonus}/mark-unpaid', [TenureBonusController::class, 'markUnpaid'])->name('mark-unpaid');
             Route::post('/mark-unpaid-bulk', [TenureBonusController::class, 'markUnpaidBulk'])->name('mark-unpaid-bulk');
-            Route::post('/{bonus}/mark-pending', [TenureBonusController::class, 'markAsPending'])->name('mark-pending');
         });
 });

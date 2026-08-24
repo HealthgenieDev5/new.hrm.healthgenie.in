@@ -75,6 +75,18 @@
                             </div>
                         </div>
 
+                        <div class="col-lg-3 col-md-4">
+                            <div class="form-floating-flatpickr">
+                                <div class="input-group input-group-flatpicker" id="daterange_picker" data-wrap="true">
+                                    <input type="text" id="date_range" class="form-control form-control-sm" name="date_range" value="{{ request('date_range') }}" placeholder="Date Range" data-input data-open>
+                                    <span class="input-group-text cursor-pointer" data-toggle>
+                                        <i class="far fa-calendar-alt"></i>
+                                    </span>
+                                </div>
+                                <label class="form-label">Date Range <small class="text-muted">(optional)</small></label>
+                            </div>
+                        </div>
+
                         <div class="col-lg-2 col-md-3 d-flex align-items-end">
                             <label for="only_weekoff_working" class="badge badge-warning d-flex align-items-center justify-content-center gap-3 cursor-pointer" style="width: max-content;">
                                 <input type="checkbox" name="only_weekoff_working" id="only_weekoff_working" class="cursor-pointer" value="yes" {{ request('only_weekoff_working') == 'yes' ? 'checked' : '' }} />
@@ -99,12 +111,47 @@
     <x-slot name="scripts">
         <script>
             $(document).ready(function() {
-                $('#yearmonth_picker').flatpickr({
+
+                let dateRangePicker = null;
+
+                function getMonthBounds(yearmonth) {
+                    if (!yearmonth) return { minDate: null, maxDate: null };
+                    const [year, month] = yearmonth.split('-').map(Number);
+                    const minDate = new Date(year, month - 1, 1);
+                    const maxDate = new Date(year, month, 0); // last day of month
+                    return { minDate, maxDate };
+                }
+
+                function initDateRangePicker(yearmonth) {
+                    const { minDate, maxDate } = getMonthBounds(yearmonth);
+                    if (dateRangePicker) {
+                        dateRangePicker.destroy();
+                    }
+                    dateRangePicker = flatpickr('#daterange_picker', {
+                        wrap: true,
+                        mode: 'range',
+                        dateFormat: 'Y-m-d',
+                        altInput: true,
+                        altFormat: 'd M Y',
+                        altInputClass: 'form-control form-control-sm',
+                        minDate: minDate,
+                        maxDate: maxDate,
+                        defaultDate: $('#date_range').val() ? $('#date_range').val().split(' to ') : null,
+                    });
+                }
+
+                const monthPicker = $('#yearmonth_picker').flatpickr({
                     dateFormat: 'Y-m',
                     altInput: true,
                     altFormat: 'M Y',
-                    altInputClass: "form-control form-control-sm"
-                })
+                    altInputClass: "form-control form-control-sm",
+                    onChange: function(selectedDates, dateStr) {
+                        initDateRangePicker(dateStr);
+                    }
+                });
+
+                const initialMonth = $('#yearmonth').val();
+                initDateRangePicker(initialMonth);
             })
         </script>
     </x-slot>

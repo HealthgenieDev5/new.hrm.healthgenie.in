@@ -262,7 +262,7 @@
                     // pageLength: -1,
                     // paging: false,
                     language: {
-                        processing: "<div>Loading data, please wait...</div>",
+                        processing: "<div>Loading data, please wait.......</div>",
                         info: "Showing _START_ to _END_ of _TOTAL_ workers",
                         infoFiltered: "(filtered from _MAX_ total workers)"
                     },

@@ -56,4 +56,11 @@ return [
         'password' => env('MACHINE_3_PASSWORD'),
     ],
 
+    'head_office_machine_api' => [
+        'url' => env('HEAD_OFFICE_MACHINE_API_URL'),
+        'corporate_id' => env('HEAD_OFFICE_MACHINE_CORPORATE_ID'),
+        'username' => env('HEAD_OFFICE_MACHINE_USERNAME'),
+        'password' => env('HEAD_OFFICE_MACHINE_PASSWORD'),
+    ],
+
 ];

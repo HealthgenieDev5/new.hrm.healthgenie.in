@@ -55,8 +55,8 @@ class WorkerService implements WorkerServiceInterface
         return [
             ['data' => 'code', 'title' => 'Code'],
             ['data' => 'name', 'title' => 'Name'],
-            ['data' => 'status', 'title' => 'Status'],
-            ['data' => 'shift', 'title' => 'Shift'],
+            ['data' => 'status', 'title' => 'Status', 'orderable' => false, 'searchable' => false],
+            ['data' => 'shift', 'title' => 'Shift', 'orderable' => false, 'searchable' => false],
             ['data' => 'gender', 'title' => 'Gender'],
             ['data' => 'mobile_number', 'title' => "Mobile number"],
             ['data' => 'photo', 'title' => "Photo"],
@@ -72,9 +72,9 @@ class WorkerService implements WorkerServiceInterface
         return [
             ['data' => 'code', 'title' => 'Code'],
             ['data' => 'name', 'title' => 'Name'],
-            ['data' => 'psp', 'title' => 'PSP'],
-            ['data' => 'status', 'title' => 'Status'],
-            ['data' => 'shift', 'title' => 'Shift'],
+            ['data' => 'psp', 'title' => 'PSP', 'orderable' => false, 'searchable' => false],
+            ['data' => 'status', 'title' => 'Status', 'orderable' => false, 'searchable' => false],
+            ['data' => 'shift', 'title' => 'Shift', 'orderable' => false, 'searchable' => false],
 
             // ['data' => 'workingarea', 'title' => 'Working Area'],
             ['data' => 'date_of_joining', 'title' => 'DOJ'],
@@ -84,7 +84,7 @@ class WorkerService implements WorkerServiceInterface
             ['data' => 'notice_period_served', 'title' => 'Notice Period Served'],
 
 
-            ['data' => 'designation', 'title' => 'Designation'],
+            ['data' => 'designation', 'title' => 'Designation', 'orderable' => false, 'searchable' => false],
             ['data' => 'gender', 'title' => 'Gender'],
             ['data' => 'father_name', 'title' => "Father's Name"],
             ['data' => 'mobile_number', 'title' => "Mobile number"],
@@ -93,15 +93,15 @@ class WorkerService implements WorkerServiceInterface
             ['data' => 'adhar_front', 'title' => "Adhar <small>Front</small>"],
             ['data' => 'adhar_back', 'title' => "Adhar <small>Back</small>"],
 
-            ['data' => 'division', 'title' => "Division <small></small>"],
-            ['data' => 'department', 'title' => "Department <small></small>"],
-            ['data' => 'subdepartment', 'title' => "SubDepartment <small></small>"],
-            ['data' => 'workingarea', 'title' => 'Working Area'],
-            ['data' => 'productionproduct', 'title' => "ProductionProduct <small></small>"],
-            ['data' => 'line', 'title' => "Line <small></small>"],
-            ['data' => 'process', 'title' => "Process <small></small>"],
-            ['data' => 'level', 'title' => "Level <small></small>"],
-            ['data' => 'workertype', 'title' => "Workertype <small></small>"],
+            ['data' => 'division', 'title' => "Division <small></small>", 'orderable' => false, 'searchable' => false],
+            ['data' => 'department', 'title' => "Department <small></small>", 'orderable' => false, 'searchable' => false],
+            ['data' => 'subdepartment', 'title' => "SubDepartment <small></small>", 'orderable' => false, 'searchable' => false],
+            ['data' => 'workingarea', 'title' => 'Working Area', 'orderable' => false, 'searchable' => false],
+            ['data' => 'productionproduct', 'title' => "ProductionProduct <small></small>", 'orderable' => false, 'searchable' => false],
+            ['data' => 'line', 'title' => "Line <small></small>", 'orderable' => false, 'searchable' => false],
+            ['data' => 'process', 'title' => "Process <small></small>", 'orderable' => false, 'searchable' => false],
+            ['data' => 'level', 'title' => "Level <small></small>", 'orderable' => false, 'searchable' => false],
+            ['data' => 'workertype', 'title' => "Workertype <small></small>", 'orderable' => false, 'searchable' => false],
 
 
             ['data' => 'uan', 'title' => "UAN <small>available</small>"],
@@ -151,7 +151,7 @@ class WorkerService implements WorkerServiceInterface
                 return $worker->date_of_leaving ? \Carbon\Carbon::parse($worker->date_of_leaving)->format('d M Y') : 'N/A';
             })
             ->editColumn('photo', function ($worker) {
-                return $worker->photo ? '<div class="symbol symbol-45px overflow-hidden"><img src="' . Storage::url($worker->photo) . '" alt="' . $worker->name . '"></div>' : 'N/A';
+                return $worker->photo ? '<div class="symbol symbol-45px overflow-hidden"><img src="' . Storage::url($worker->photo) . '" alt="' . $worker->name . '" style="object-fit:cover;"></div>' : 'N/A';
             })
             ->editColumn('permanent_address', function ($worker) {
                 return $worker->permanent_address ? '<p class="mx-auto text-wrap text-justify mb-0 lh-sm" style="width: max-content; max-width: 150px;"><small>' . $worker->permanent_address . '</small></p>' : 'N/A';
@@ -187,10 +187,10 @@ class WorkerService implements WorkerServiceInterface
                 return $worker?->subdepartment?->name ?? 'N/A';
             })
             ->addColumn('workingarea', function ($worker) {
-                return $worker?->workingarea?->name ?? 'N/A';
+                return $worker?->workingArea?->name ?? 'N/A';
             })
             ->addColumn('productionproduct', function ($worker) {
-                return $worker?->productionproduct?->name ?? 'N/A';
+                return $worker?->productionProduct?->name ?? 'N/A';
             })
             ->addColumn('line', function ($worker) {
                 return $worker?->line?->name ?? 'N/A';
@@ -302,7 +302,7 @@ class WorkerService implements WorkerServiceInterface
                 'adhar_front',
                 'adhar_back',
                 'uan_photo',
-                'form11_photo',
+                'form_11_photo',
                 'affidavit_photo',
                 'lop_photo',
             ])

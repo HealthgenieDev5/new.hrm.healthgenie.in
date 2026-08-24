@@ -83,8 +83,8 @@ class ProcessAttendance extends Command
             }
 
 
-            //$query->where('id', '>=', '3');
-            //$query->where('id', '<', '200');
+            // $query->where('id', '>=', '3');
+            // $query->where('id', '<', '200');
 
             // $query->where('id', '>=', '200');
             // $query->where('id', '<', '400');
@@ -136,7 +136,7 @@ class ProcessAttendance extends Command
 
                 $this->output->write("\n\033[2K");
                 // $this->output->write("Processed: {$worker->code} - Memory consumed {$memoryUsed}");
-                $this->output->write("Processed: {$worker->code} - Memory: " . $memoryUsed . " MB - Time: {$timeTaken} sec");
+                $this->output->write("Processed: id:{$worker->id} code:{$worker->code} - Memory: " . $memoryUsed . " MB - Time: {$timeTaken} sec");
             }
             $bar->finish();
 

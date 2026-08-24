@@ -11,7 +11,7 @@
                 <div class="col-md-3">
                     <div class="card shadow-sm">
                         <div class="card-body bg-light-primary m-2">
-                            <h6 class="card-title">Total Bonuses</h6>
+                            <h6 class="card-title">Total Incentive</h6>
                             <h3 class="card-text">{{ $summary['total_bonuses'] }}</h3>
                             <p class="card-text">₹{{ number_format($summary['total_amount'], 2) }}</p>
                         </div>
@@ -20,7 +20,7 @@
                 <div class="col-md-3">
                     <div class="card shadow-sm">
                         <div class="card-body bg-light-success m-2">
-                            <h6 class="card-title">Paid Bonuses</h6>
+                            <h6 class="card-title">Paid Incentive</h6>
                             <h3 class="card-text">{{ $summary['paid_bonuses'] }}</h3>
                             <p class="card-text">₹{{ number_format($summary['paid_amount'], 2) }}</p>
                         </div>
@@ -29,7 +29,7 @@
                 <div class="col-md-3 ">
                     <div class="card shadow-sm">
                         <div class="card-body bg-light-warning m-2">
-                            <h6 class="card-title">Pending Bonuses</h6>
+                            <h6 class="card-title">Pending Incentive</h6>
                             <h3 class="card-text">{{ $summary['pending_bonuses'] }}</h3>
                             <p class="card-text">₹{{ number_format($summary['pending_amount'], 2) }}</p>
                         </div>
@@ -38,7 +38,7 @@
                 <div class="col-md-3">
                     <div class="card shadow-sm">
                         <div class="card-body bg-light-danger m-2">
-                            <h6 class="card-title">Unpaid Bonuses</h6>
+                            <h6 class="card-title">Unpaid Incentive</h6>
                             <h3 class="card-text">{{ $summary['unpaid_bonuses'] }}</h3>
                             <p class="card-text">₹{{ number_format($summary['unpaid_amount'], 2) }}</p>
                         </div>
@@ -68,7 +68,7 @@
                         <th class="text-dark fw-bolder text-hover-primary fs-6">Completion Date</th>
                         <th class="text-dark fw-bolder text-hover-primary fs-6">PSP Name</th>
                         <th class="text-dark fw-bolder text-hover-primary fs-6">Status</th>
-                        <th class="text-dark fw-bolder text-hover-primary fs-6">Payment Ref</th>
+                        <th class="text-dark fw-bolder text-hover-primary fs-6">Remarks</th>
                         {{-- <th class="text-dark fw-bolder text-hover-primary fs-6">Actions</th> --}}
                     </tr>
                 </thead>
@@ -81,7 +81,7 @@
                         <th class="text-dark fw-bolder text-hover-primary fs-6">Completion Date</th>
                         <th class="text-dark fw-bolder text-hover-primary fs-6">PSP Name</th>
                         <th class="text-dark fw-bolder text-hover-primary fs-6">Status</th>
-                        <th class="text-dark fw-bolder text-hover-primary fs-6">Payment Ref</th>
+                        <th class="text-dark fw-bolder text-hover-primary fs-6">Remarks</th>
                         {{-- <th class="text-dark fw-bolder text-hover-primary fs-6">Actions</th> --}}
                     </tr>
                 </tfoot>
@@ -112,7 +112,7 @@
                             </td>
                             <td class="py-1">
                                 @if ($bonus->is_paid == 'yes')
-                                    <span class="badge badge-success">Paid</span>
+                                    <span class="badge badge-success"> Paid</span>
                                 @elseif ($bonus->is_paid == 'no')
                                     <span class="badge badge-danger">Unpaid</span>
                                 @else
@@ -139,27 +139,7 @@
                                     <span class="text-muted">-</span>
                                 @endif
                             </td>
-                            {{-- <td class="py-1">
-                                @if ($bonus->is_paid == 'panding')
-                                    <div class="d-flex gap-2">
-                                        <button type="button" class="btn btn-success btn-sm mark-as-paid-button"
-                                            data-bonus_id = "{{ $bonus->id }}">
-                                            Mark as Paid</button>
-                                        <button type="button" class="btn btn-danger btn-sm mark-as-unpaid-button"
-                                            data-bonus_id = "{{ $bonus->id }}">
-                                            Mark as Unpaid</button>
-                                    </div>
-                                @elseif ($bonus->is_paid == 'yes')
-                                    <button type="button" class="btn btn-warning btn-sm mark-as-pending-button"
-                                        data-bonus_id = "{{ $bonus->id }}">
-                                        Mark as Pending</button>
-                                @elseif ($bonus->is_paid == 'no')
-                                    <button type="button" class="btn btn-info btn-sm mark-as-pending-button"
-                                        data-bonus_id = "{{ $bonus->id }}">
-                                        Mark as Pending</button>
-                                @endif
 
-                            </td> --}}
                         </tr>
                     @empty
                         <tr>
@@ -329,25 +309,6 @@
                         ':bonus', bonusId);
                     $('#mark_unpaid_form').attr('action', formAction);
                     $('#markUnpaidModal').modal('show');
-                });
-
-                $(document).on('click', '.mark-as-pending-button', function() {
-                    let bonusId = $(this).data('bonus_id');
-                    if (confirm('Are you sure you want to mark this bonus as pending?')) {
-                        let formAction = "{{ route('reports.tenure-bonus.mark-pending', ':bonus') }}".replace(
-                            ':bonus', bonusId);
-                        let form = $('<form>', {
-                            'method': 'POST',
-                            'action': formAction
-                        });
-                        form.append($('<input>', {
-                            'type': 'hidden',
-                            'name': '_token',
-                            'value': '{{ csrf_token() }}'
-                        }));
-                        $('body').append(form);
-                        form.submit();
-                    }
                 });
 
                 // Initialize DataTable

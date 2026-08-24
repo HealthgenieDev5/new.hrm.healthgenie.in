@@ -120,7 +120,9 @@ class ProductionPlanningService implements ProductionPlanningInterface
             ->whereIn('worker_id', $assignedWorkerIds)
             ->count();
 
-        $shortfall = max(0, $requirement->workers - $presentCount);
+        $difference = $requirement->workers - $presentCount;
+        $shortfall = max(0, $difference);
+        $excess = max(0, -$difference);
 
         return collect(
             [
@@ -130,11 +132,13 @@ class ProductionPlanningService implements ProductionPlanningInterface
                 'extras' => $requirement->extras,
                 'present' => $presentCount,
                 'shortfall' => $shortfall,
+                'excess' => $excess,
+                'difference' => $difference, // Negative = excess, Positive = shortfall
                 'supervisors' => $requirement->supervisors,
                 'qas' => $requirement->qas,
                 'services' => $requirement->services,
                 'movers' => $requirement->movers,
-                'status' => $shortfall <= 0 ? 'ok' : 'incomplete',
+                'status' => $difference > 0 ? 'short' : ($difference < 0 ? 'excess' : 'ok'),
             ]
         );
     }
@@ -276,13 +280,24 @@ class ProductionPlanningService implements ProductionPlanningInterface
 
                 $result[$lineName]['present'][$date] = $present;
 
+                $dayDifference = $result[$lineName]['total'][$date]['day'] - $present['day'];
+                $nightDifference = $result[$lineName]['total'][$date]['night'] - $present['night'];
+
                 $result[$lineName]['shortfall'][$date] = [
-                    'day' => max(0, $result[$lineName]['total'][$date]['day'] - $present['day']),
-                    'night' => max(0, $result[$lineName]['total'][$date]['night'] - $present['night']),
+                    'day' => max(0, $dayDifference),
+                    'night' => max(0, $nightDifference),
+                ];
+                $result[$lineName]['excess'][$date] = [
+                    'day' => max(0, -$dayDifference),
+                    'night' => max(0, -$nightDifference),
+                ];
+                $result[$lineName]['difference'][$date] = [
+                    'day' => $dayDifference,
+                    'night' => $nightDifference,
                 ];
                 $result[$lineName]['status'][$date] = [
-                    'day' => ($result[$lineName]['total'][$date]['day'] - $present['day']) > 0 ? 'short' : 'ok',
-                    'night' => ($result[$lineName]['total'][$date]['night'] - $present['night']) > 0 ? 'short' : 'ok',
+                    'day' => $dayDifference > 0 ? 'short' : ($dayDifference < 0 ? 'excess' : 'ok'),
+                    'night' => $nightDifference > 0 ? 'short' : ($nightDifference < 0 ? 'excess' : 'ok'),
                 ];
             }
         }

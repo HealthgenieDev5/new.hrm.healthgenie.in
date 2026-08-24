@@ -3,9 +3,9 @@
 use App\Console\Commands\FetchAttendance;
 use App\Console\Commands\ProcessAttendance;
 use App\Console\Commands\ProcessTenureBonuses;
+use App\Console\Commands\SendAbsenteeismReport;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
@@ -13,7 +13,7 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
 
-#Fetch Attendance from API every 3 minutes
+// Fetch Attendance from API every 3 minutes
 Schedule::command(FetchAttendance::class)
     ->everyFifteenMinutes()
     ->runInBackground()
@@ -21,7 +21,7 @@ Schedule::command(FetchAttendance::class)
         Log::warning('Schedule FetchAttendance was attempted but skipped.');
     });
 
-#Process Attendance every 30 minutes
+// Process Attendance every 30 minutes
 Schedule::command(ProcessAttendance::class)
     ->everyThirtyMinutes()
     ->runInBackground()
@@ -29,10 +29,18 @@ Schedule::command(ProcessAttendance::class)
         Log::warning('Schedule ProcessAttendance was attempted but skipped.');
     });
 
-    # Process Tenure Bonuses every Day at 1:00 AM
+// Process Tenure Bonuses every Day at 1:00 AM
 Schedule::command(ProcessTenureBonuses::class)
     ->dailyAt('01:00')
     ->runInBackground()
     ->onFailure(function () {
         Log::warning('Schedule ProcessTenureBonuses was attempted but skipped.');
+    });
+
+// Send Absenteeism Report every Day at 12:00 PM
+Schedule::command(SendAbsenteeismReport::class)
+    ->dailyAt('12:00')
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::warning('Schedule SendAbsenteeismReport was attempted but skipped.');
     });

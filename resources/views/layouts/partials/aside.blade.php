@@ -81,6 +81,18 @@
                             </a>
                         </div>
 
+                        @hasPermissionTo('View Synced Calls')
+                            <div class="menu-item">
+                                <a class="menu-link {{ request()->routeIs('dashboard.synced-call-records*') ? 'active' : '' }}"
+                                    href="{{ route('dashboard.synced-call-records') }}">
+                                    <span class="menu-bullet">
+                                        <span class="bullet bullet-dot"></span>
+                                    </span>
+                                    <span class="menu-title">Synced Call Records</span>
+                                </a>
+                            </div>
+                        @endhasPermissionTo
+
                     </div>
                 </div>
 

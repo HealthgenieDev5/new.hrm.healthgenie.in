@@ -35,6 +35,12 @@
                                     Name
                                 </th>
                                 <th class="text-dark fw-bolder text-hover-primar fs-6">
+                                    Date
+                                </th>
+                                <th class="text-dark fw-bolder text-hover-primar fs-6">
+                                    Code
+                                </th>
+                                <th class="text-dark fw-bolder text-hover-primar fs-6">
                                     No of Workers
                                 </th>
                                 <th class="text-dark fw-bolder text-hover-primar fs-6">
@@ -53,7 +59,13 @@
                                     {{$holiday->name}}
                                 </td>
                                 <td>
-                                    {{$holiday->workercount}}
+                                    {{ \Carbon\Carbon::parse($holiday->date)->format('d F Y') }}
+                                </td>
+                                <td>
+                                    {{$holiday->code}}
+                                </td>
+                                <td>
+                                    {{ $holiday->code == 'SPL HL' ? $holiday->workercount : '-' }}
                                 </td>
                                 <td>
                                     <div class="d-flex justify-content-center">

@@ -18,7 +18,8 @@ return new class extends Migration
             $table->integer('working_days_completed');
             $table->boolean('is_completion_bonus')->default(false);
             $table->boolean('is_psp_worker')->default(false);
-            $table->boolean('is_paid')->default(false);
+            // $table->boolean('is_paid')->default(false);
+            $table->enum('is_paid', ['yes', 'no', 'pending'])->default('pending');
             $table->date('paid_date')->nullable();
             $table->string('payment_reference')->nullable();
             $table->text('remarks')->nullable();

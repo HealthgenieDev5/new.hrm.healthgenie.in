@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 // use App\Services\AttendanceApiMachineThree;
 // use App\Services\AttendanceApiMachineTwo;
 
+use App\Services\AttendanceApi\AttendanceApiHeadOfficeMachine;
 use App\Services\AttendanceApi\AttendanceApiMachineOne;
 use App\Services\AttendanceApi\AttendanceApiMachineThree;
 use App\Services\AttendanceApi\AttendanceApiMachineTwo;
@@ -23,14 +24,18 @@ class FetchAttendance extends Command
     protected $signature = 'attendance:fetch
                             {--month= : Year and Month for processing attendance (YYYY-MM)}
                             {--worker= : worker code to process (e.g., RS293 or RS294)}';
+
     /**
      * The console command description.
      *
      * @var string
      */
     protected $description = 'Attendance Api All machines';
+
     protected $empcode;
+
     protected $fromDate;
+
     protected $toDate;
 
     // protected $attendanceApiMachineOne;
@@ -40,11 +45,13 @@ class FetchAttendance extends Command
     public function __construct(
         protected AttendanceApiMachineOne $attendanceApiMachineOne,
         protected AttendanceApiMachineTwo $attendanceApiMachineTwo,
-        protected AttendanceApiMachineThree $attendanceApiMachineThree
+        protected AttendanceApiMachineThree $attendanceApiMachineThree,
+        protected AttendanceApiHeadOfficeMachine $attendanceApiHeadOfficeMachine,
     ) {
         parent::__construct();
         $this->empcode = 'ALL';
-        $this->fromDate = date('01/m/Y');
+        // $this->fromDate = date('01/m/Y');
+        $this->fromDate = date('d/m/Y');
         $this->toDate = date('t/m/Y');
     }
 
@@ -69,9 +76,9 @@ class FetchAttendance extends Command
                 Log::info('❌ fetch_attendance_lock already held. Skipped at: ' . now());
                 Cache::put('fetch_attendance_log_throttle', true, now()->addMinutes(5));
             }
+
             return;
         }
-
 
         Log::info('Command attendance:fetch started at: ' . now());
         $this->info('Command attendance:fetch started at: ' . now());
@@ -80,11 +87,11 @@ class FetchAttendance extends Command
             $this->empcode = $this->option('worker');
         }
         if ($this->option('month')) {
-            $this->fromDate = date('01/m/Y', strtotime($this->option('month') . "-01"));
+            $this->fromDate = date('01/m/Y', strtotime($this->option('month') . '-01'));
             if ($this->option('month') == date('Y-m')) {
                 $this->toDate = date('d/m/Y');
             } else {
-                $this->toDate = date('t/m/Y', strtotime($this->option('month') . "-01"));
+                $this->toDate = date('t/m/Y', strtotime($this->option('month') . '-01'));
             }
         }
 
@@ -95,19 +102,23 @@ class FetchAttendance extends Command
             $this->info('fetchDayShiftAttendance1 has ended at: ' . now());
             Log::info('fetchDayShiftAttendance1 has ended at: ' . now());
 
-
             $this->info('fetchNightShiftAttendance1 has started at: ' . now());
             Log::info('fetchNightShiftAttendance1 has started at: ' . now());
             $this->fetchNightShiftAttendance1();
             $this->info('fetchNightShiftAttendance1 has ended at: ' . now());
             Log::info('fetchNightShiftAttendance1 has ended at: ' . now());
 
-
             $this->info('fetchHeuerWorkerAttendance has started at: ' . now());
             Log::info('fetchHeuerWorkerAttendance has started at: ' . now());
             $this->fetchHeuerWorkerAttendance();
             $this->info('fetchHeuerWorkerAttendance has ended at: ' . now());
             Log::info('fetchHeuerWorkerAttendance has ended at: ' . now());
+
+            $this->info('fetchHOWorkerAttendance has started at: ' . now());
+            Log::info('fetchHOWorkerAttendance has started at: ' . now());
+            $this->fetchHOWorkerAttendance();
+            $this->info('fetchHOWorkerAttendance has ended at: ' . now());
+            Log::info('fetchHOWorkerAttendance has ended at: ' . now());
         } catch (\Exception $e) {
             Log::error('Command attendance:fetch failed at: ' . now() . $e->getMessage());
             $this->error('Command attendance:fetch failed at: ' . now() . $e->getMessage());
@@ -160,5 +171,23 @@ class FetchAttendance extends Command
         }
         $this->info('Completed fetching attendance for Heuer Worker');
         Log::info('Completed fetching attendance for Heuer Worker');
+    }
+
+    private function fetchHOWorkerAttendance()
+    {
+        $this->info('Started to fetch attendance for Head Office Worker');
+        // $result = $this->attendanceApiHeadOfficeMachine->storeAttendance($this->empcode, $this->fromDate, $this->toDate);
+        $result = $this->attendanceApiHeadOfficeMachine->storeAttendance('RS391', $this->fromDate, $this->toDate);
+        $result = $this->attendanceApiHeadOfficeMachine->storeAttendance('RS390', $this->fromDate, $this->toDate);
+        $result = $this->attendanceApiHeadOfficeMachine->storeAttendance('RS417', $this->fromDate, $this->toDate);
+        $result = $this->attendanceApiHeadOfficeMachine->storeAttendance('RS453', $this->fromDate, $this->toDate);
+        $result = $this->attendanceApiHeadOfficeMachine->storeAttendance('RS489', $this->fromDate, $this->toDate);
+        if ($result['success']) {
+            $this->info($result['message']);
+        } else {
+            $this->error($result['message']);
+        }
+        $this->info('Completed fetching attendance for Head Office Worker');
+        Log::info('Completed fetching attendance for Head Office Worker');
     }
 }

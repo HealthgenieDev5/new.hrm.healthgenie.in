@@ -56,7 +56,7 @@ class PlanningController extends Controller
             'movers' => 'Required Movers',
             'assigned' => 'Assigned',
             'present' => 'Present',
-            'shortfall' => 'Shortfall',
+            'shortfall' => 'Shortfall/Excess',
             'status' => 'Status',
         ];
         $totalSums = [];
@@ -81,6 +81,7 @@ class PlanningController extends Controller
         $orderedKeys = [
             "IVC 1",
             "IVC 2",
+            "IVC Common",
             "Tubing 1",
             "Tubing 2",
             "QA",
@@ -91,14 +92,17 @@ class PlanningController extends Controller
             "Extrusion",
             "MVA Assembly",
             "Stores",
+            "FG Store",
             "Maintainance",
             "Housekeeping",
             "Resuscitator",
             "Automation",
             "Moulding",
             "DND",
-            "Others Production",
+            "Orthoaids",
+            "Silicon",
             "Services and Others",
+            "Others Production",
         ];
         $reorderedData = collect();
         // Add prioritized ones first

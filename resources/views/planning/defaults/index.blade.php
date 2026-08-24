@@ -60,6 +60,28 @@
                         <td class="text-center">
                             @if ($param === 'status')
                             --
+                            @elseif ($param === 'shortfall')
+                            @php
+                            $shortfallDay = $totalSums['shortfall'][$date]['day'] ?? 0;
+                            $excessDay = $totalSums['excess'][$date]['day'] ?? 0;
+                            $shortfallNight = $totalSums['shortfall'][$date]['night'] ?? 0;
+                            $excessNight = $totalSums['excess'][$date]['night'] ?? 0;
+                            @endphp
+                            @if ($shortfallDay > 0)
+                            <span class="text-danger fw-bold">{{ $shortfallDay }}</span>
+                            @elseif ($excessDay > 0)
+                            <span class="text-success fw-bold">+{{ $excessDay }}</span>
+                            @else
+                            <span>0</span>
+                            @endif
+                            |
+                            @if ($shortfallNight > 0)
+                            <span class="text-danger fw-bold">{{ $shortfallNight }}</span>
+                            @elseif ($excessNight > 0)
+                            <span class="text-success fw-bold">+{{ $excessNight }}</span>
+                            @else
+                            <span>0</span>
+                            @endif
                             @else
                             {{ $totalSums[$param][$date]['day'] }} | {{ $totalSums[$param][$date]['night'] }}
                             @endif
@@ -81,7 +103,7 @@
                     'movers' => 'Required Movers',
                     'assigned' => 'Assigned',
                     'present' => 'Present',
-                    'shortfall' => 'Shortfall',
+                    'shortfall' => 'Shortfall/Excess',
                     'status' => 'Status',
                     ];
 
@@ -93,9 +115,9 @@
                     }
                     @endphp
                     @foreach ($parameters as $param => $values)
-                    {{-- Skip the 'line_id' row --}}
+                    {{-- Skip the 'line_id', 'excess', and 'difference' rows --}}
 
-                    @if ($param !== 'line_id')
+                    @if ($param !== 'line_id' && $param !== 'excess' && $param !== 'difference')
                     <tr>
                         <td>
                             @if ($i == 1)
@@ -137,14 +159,42 @@
                         @endphp
                         <td class="text-center">
                             @if ($param === 'status')
-                            <span class="{{ $zeroDay[$date] ? 'text-danger' : '' }}">
-                                {{ $zeroDay[$date] ? 'Closed' : ucfirst($day) }}
+                            @php
+                            $dayStatus = is_array($val) ? ($val['day'] ?? 'ok') : $val;
+                            $nightStatus = is_array($val) ? ($val['night'] ?? 'ok') : null;
+                            @endphp
+                            <span class="{{ $zeroDay[$date] ? 'text-danger' : ($dayStatus === 'short' ? 'text-danger fw-bold' : ($dayStatus === 'excess' ? 'text-success fw-bold' : '')) }}">
+                                {{ $zeroDay[$date] ? 'Closed' : ucfirst($dayStatus) }}
                             </span>
                             @if ($night !== null)
                             |
-                            <span class="{{ $zeroNight[$date] ? 'text-danger' : '' }}">
-                                {{ $zeroNight[$date] ? 'Closed' : ucfirst($night) }}
+                            <span class="{{ $zeroNight[$date] ? 'text-danger' : ($nightStatus === 'short' ? 'text-danger fw-bold' : ($nightStatus === 'excess' ? 'text-success fw-bold' : '')) }}">
+                                {{ $zeroNight[$date] ? 'Closed' : ucfirst($nightStatus) }}
                             </span>
+                            @endif
+                            @elseif ($param === 'shortfall')
+                            @php
+                            $shortfallDay = $parameters['shortfall'][$date]['day'] ?? 0;
+                            $excessDay = $parameters['excess'][$date]['day'] ?? 0;
+                            $shortfallNight = $parameters['shortfall'][$date]['night'] ?? 0;
+                            $excessNight = $parameters['excess'][$date]['night'] ?? 0;
+                            @endphp
+                            @if ($shortfallDay > 0)
+                            <span class="text-danger fw-bold">{{ $shortfallDay }}</span>
+                            @elseif ($excessDay > 0)
+                            <span class="text-success fw-bold">+{{ $excessDay }}</span>
+                            @else
+                            <span>0</span>
+                            @endif
+                            @if ($night !== null)
+                            |
+                            @if ($shortfallNight > 0)
+                            <span class="text-danger fw-bold">{{ $shortfallNight }}</span>
+                            @elseif ($excessNight > 0)
+                            <span class="text-success fw-bold">+{{ $excessNight }}</span>
+                            @else
+                            <span>0</span>
+                            @endif
                             @endif
                             @else
                             @if ($night === null)

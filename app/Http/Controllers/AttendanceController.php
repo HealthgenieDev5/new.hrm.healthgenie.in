@@ -6,23 +6,19 @@ use App\Models\Attendance;
 use App\Models\Designation;
 use App\Models\Division;
 use App\Models\Level;
-use App\Models\ProcessedAttendance;
 use App\Models\ProductionProduct;
 use App\Models\Psp;
 use App\Models\Shift;
 use App\Models\Worker;
 use App\Models\Workertype;
 use App\Models\WorkingArea;
+use App\Services\AttendanceApi\AttendanceApiHeadOfficeMachine;
 use App\Services\AttendanceApi\AttendanceApiMachineOne;
 use App\Services\AttendanceApi\AttendanceApiMachineThree;
 use App\Services\AttendanceApi\AttendanceApiMachineTwo;
-use App\Services\AttendanceDatatableService;
-use App\Services\AttendancePdfService;
 use App\Services\MissedPunchDatatableService;
 use App\Services\WorkerAttendanceService;
-use App\Services\WorkerAttendanceSummaryService;
 use App\Services\WrongShiftDatatableService;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -32,11 +28,10 @@ use Yajra\DataTables\DataTables;
 
 class AttendanceController extends Controller
 {
-
     /**
      * Display a listing of the resource.
      */
-    /** @var \App\Models\User|null $user */
+    /** @var \App\Models\User|null */
     private $user;
 
     public function __construct(private WorkerAttendanceService $WorkerAttendanceService)
@@ -56,11 +51,12 @@ class AttendanceController extends Controller
         $datesInMonth = $this->WorkerAttendanceService->getTimeAttendanceDatesInMonth($request);
         $columns = $this->WorkerAttendanceService->generateTimeAttendanceColumns($request);
         // dd($columns);
-        $pageTitle = "Time Attendance " . date('F Y', strtotime($yearMonth));
+        $pageTitle = 'Time Attendance ' . date('F Y', strtotime($yearMonth));
         $psps = Psp::all();
         $shifts = Shift::all();
         $workers = $this->GetFilterdWorkers($request);
         $user = $this->user;
+
         return view('attendance.index', compact('pageTitle', 'datesInMonth', 'currentDate', 'columns', 'user', 'psps', 'shifts', 'workers', 'yearMonth'));
     }
 
@@ -68,9 +64,9 @@ class AttendanceController extends Controller
     {
         if ($request->ajax()) {
             $datesInMonth = $this->WorkerAttendanceService->getTimeAttendanceDatesInMonth($request);
-            $monthlyAttendance =  $this->WorkerAttendanceService->getMonthlyAttendance($request);
+            $monthlyAttendance = $this->WorkerAttendanceService->getMonthlyAttendance($request);
             // dd($monthlyAttendance);
-            #Define the columns that contain raw HTML
+            // Define the columns that contain raw HTML
             $rawColumns = array_merge(
                 ['code', 'name'],
                 $datesInMonth->toArray()
@@ -80,6 +76,7 @@ class AttendanceController extends Controller
                 ->of($monthlyAttendance)
                 ->rawColumns($rawColumns)
                 ->make(true);
+
             return $response;
         }
     }
@@ -91,6 +88,7 @@ class AttendanceController extends Controller
             $workersQuery->where('psp_id', $request->psp);
         }
         $workersQuery->orderBy('code', 'asc');
+
         return $request->ajax() ? response()->json($workersQuery->select('id', 'name', 'code')->get()) : $workersQuery->get();
     }
 
@@ -98,21 +96,22 @@ class AttendanceController extends Controller
     {
         $worker = Worker::where('employment_status', 'Active')->findOrFail($request->worker_id);
         $rawAttendance = [];
-        if (!empty($worker?->code)) {
+        if (! empty($worker?->code)) {
             $rawAttendance = Attendance::where('empcode', $worker->code)->where('date', $request->date)->where('shift_type', $request->shift_type)->first();
         }
-        $intime = isset($rawAttendance->intime) && !empty($rawAttendance->intime) ? date('H:i', strtotime($rawAttendance->intime)) : null;
-        $outtime = isset($rawAttendance->outtime) && !empty($rawAttendance->outtime) ? date('H:i', strtotime($rawAttendance->outtime)) : null;
+        $intime = isset($rawAttendance->intime) && ! empty($rawAttendance->intime) ? date('H:i', strtotime($rawAttendance->intime)) : null;
+        $outtime = isset($rawAttendance->outtime) && ! empty($rawAttendance->outtime) ? date('H:i', strtotime($rawAttendance->outtime)) : null;
+
         return response()->json(['intime' => $intime, 'outtime' => $outtime]);
     }
 
     public function missedPunch(Request $request)
     {
         if ($this->user->hasRole('User')) {
-            return abort('403', "You are not authorised to view this page");
+            return abort('403', 'You are not authorised to view this page');
         }
 
-        #Initialize variables
+        // Initialize variables
         $yearMonth = $request->input('yearmonth');
         if ($yearMonth) {
             [$year, $month] = explode('-', $yearMonth);
@@ -129,11 +128,11 @@ class AttendanceController extends Controller
             $datesInMonth->push(Carbon::create($year, $month, $i)->toDateString());
         }
 
-        $MissedPunchDatatableService = new MissedPunchDatatableService();
+        $MissedPunchDatatableService = new MissedPunchDatatableService;
         $columns = $MissedPunchDatatableService->generateColumns($this->user, $datesInMonth);
         // dd($columns);
 
-        $pageTitle = "Missed Punch Report " . date('F Y', strtotime($year . '-' . $month));
+        $pageTitle = 'Missed Punch Report ' . date('F Y', strtotime($year . '-' . $month));
         $psps = Psp::all();
         $shifts = Shift::all();
         $workers = $this->GetFilterdWorkers($request);
@@ -145,19 +144,18 @@ class AttendanceController extends Controller
 
     public function getMissedPunchDatatable(Request $request)
     {
-        $MissedPunchDatatableService = new MissedPunchDatatableService();
+        $MissedPunchDatatableService = new MissedPunchDatatableService;
+
         return $MissedPunchDatatableService->getDatatable($request);
     }
-
-
 
     public function wrongShift(Request $request)
     {
         if ($this->user->hasRole('User')) {
-            return abort('403', "You are not authorised to view this page");
+            return abort('403', 'You are not authorised to view this page');
         }
 
-        #Initialize variables
+        // Initialize variables
         $yearMonth = $request->input('yearmonth');
         if ($yearMonth) {
             [$year, $month] = explode('-', $yearMonth);
@@ -174,11 +172,11 @@ class AttendanceController extends Controller
             $datesInMonth->push(Carbon::create($year, $month, $i)->toDateString());
         }
 
-        $WrongShiftDatatableService = new WrongShiftDatatableService();
+        $WrongShiftDatatableService = new WrongShiftDatatableService;
         $columns = $WrongShiftDatatableService->generateColumns($this->user, $datesInMonth);
         // dd($columns);
 
-        $pageTitle = "Wrong Shift Report " . date('F Y', strtotime($year . '-' . $month));
+        $pageTitle = 'Wrong Shift Report ' . date('F Y', strtotime($year . '-' . $month));
         $psps = Psp::all();
         $shifts = Shift::all();
         $workers = $this->GetFilterdWorkers($request);
@@ -190,19 +188,14 @@ class AttendanceController extends Controller
 
     public function getWrongShiftDatatable(Request $request)
     {
-        $WrongShiftDatatableService = new WrongShiftDatatableService();
+        $WrongShiftDatatableService = new WrongShiftDatatableService;
+
         return $WrongShiftDatatableService->getDatatable($request);
     }
-
-
-
-
-
 
     public function summary(Request $request)
     {
         $queryParams = $request->all();
-
         $query = http_build_query($queryParams);
         // Step 1: Clean the array
         $cleanedParams = $this->cleanUpRequest($queryParams);
@@ -217,14 +210,14 @@ class AttendanceController extends Controller
         if ($this->user->hasRole('User')) {
             return view('user-dashboard', compact('pageTitle'));
         }
-        #Initialize variables
+        // Initialize variables
         $date_range = $request->input('date_range') ?? date('Y-m-01') . ' to ' . date('Y-m-d');
-        $date_range_array = explode("to", $date_range);
-        if (!isset($date_range_array[1])) {
+        $date_range_array = explode('to', $date_range);
+        if (! isset($date_range_array[1])) {
             $date_range_array[1] = $date_range_array[0];
         }
         // $yearMonth = $request->input('yearmonth') ?? Carbon::now()->year . '-' . Carbon::now()->month;
-        $pageTitle = "Monthly Attendance Summary " . date('d M Y', strtotime($date_range_array[0])) . ' to ' . date('d M Y', strtotime($date_range_array[1]));
+        $pageTitle = 'Monthly Attendance Summary ' . date('d M Y', strtotime($date_range_array[0])) . ' to ' . date('d M Y', strtotime($date_range_array[1]));
 
         // $psps = Psp::all();
         // $shifts = Shift::all();
@@ -251,7 +244,6 @@ class AttendanceController extends Controller
             ];
         });
 
-
         // $divisions = Division::with('departments.subdepartments.lines.processes')->get();
 
         // return view('attendance.summary', compact('pageTitle', 'user', 'psps', 'shifts', 'workers', 'workerSummaryColumns', 'date_range', 'tableTitle', 'workerTypes', 'workingareas', 'designations', 'productionProducts', 'levels', 'divisions'));
@@ -273,7 +265,7 @@ class AttendanceController extends Controller
                 if (is_array($value)) {
                     $filtered = array_filter($value, fn($v) => $v !== '' && $v !== 'all');
 
-                    if (!empty($filtered)) {
+                    if (! empty($filtered)) {
                         $cleaned[$key] = array_values($filtered); // reset array keys
                     }
                 } else {
@@ -289,10 +281,10 @@ class AttendanceController extends Controller
 
     public function getAttendanceSummary(Request $request)
     {
-        //dd($request->all());
         $summary = $this->WorkerAttendanceService->getMonthlyAttendanceSummary($request);
         // dd($summary);
         $rawColumns = ['absent_percentage'];
+
         return DataTables::of($summary)
             ->rawColumns($rawColumns)
             ->make(true);
@@ -303,10 +295,10 @@ class AttendanceController extends Controller
         if ($this->user->hasRole('User')) {
             return view('user-dashboard', compact('pageTitle'));
         }
-        #Initialize variables
+        // Initialize variables
         $yearMonth = $request->input('yearmonth') ?? Carbon::now()->year . '-' . Carbon::now()->month;
-        $pageTitle = "Continuous Absent " . date('F Y', strtotime($yearMonth . " -1 days"));
-        $pageTitle .= " - " . date('F Y', strtotime($yearMonth));
+        $pageTitle = 'Continuous Absent ' . date('F Y', strtotime($yearMonth . ' -1 days'));
+        $pageTitle .= ' - ' . date('F Y', strtotime($yearMonth));
         $psps = Psp::all();
         $shifts = Shift::all();
         $workers = $this->GetFilterdWorkers($request);
@@ -323,6 +315,7 @@ class AttendanceController extends Controller
         $continuousAbsent = $this->WorkerAttendanceService->getContinuousAbsent($request);
         // dd($summary);
         $rawColumns = ['absent_percentage'];
+
         return DataTables::of($continuousAbsent)
             ->rawColumns($rawColumns)
             ->make(true);
@@ -334,10 +327,11 @@ class AttendanceController extends Controller
             return view('user-dashboard', compact('pageTitle'));
         }
         $yearMonth = $request->input('yearmonth') ?? Carbon::now()->year . '-' . Carbon::now()->month;
-        $pageTitle = "Recalculate Attendance";
+        $pageTitle = 'Recalculate Attendance';
         $psps = Psp::all();
         $workers = $this->GetFilterdWorkers($request);
         $user = $this->user;
+
         return view('attendance.recalculate', compact('pageTitle', 'user', 'psps', 'workers', 'yearMonth'));
     }
 
@@ -349,15 +343,15 @@ class AttendanceController extends Controller
 
         $workerExists = Worker::where('code', $workerCode)->exists();
 
-        if (!$workerExists) {
+        if (! $workerExists) {
             return back()->with('error', 'Worker not found.');
         }
 
-        $fromDate = date('01/m/Y', strtotime($yearMonth . "-01"));
+        $fromDate = date('01/m/Y', strtotime($yearMonth . '-01'));
         if ($yearMonth == date('Y-m')) {
             $toDate = date('d/m/Y');
         } else {
-            $toDate = date('t/m/Y', strtotime($yearMonth . "-01"));
+            $toDate = date('t/m/Y', strtotime($yearMonth . '-01'));
         }
 
         // Artisan::call('attendance:fetch', [
@@ -365,12 +359,18 @@ class AttendanceController extends Controller
         //     '--month' => $yearMonth
         // ]);
 
+        // $attendanceApiMachineOne = new AttendanceApiMachineOne;
+        // $attendanceApiMachineTwo = new AttendanceApiMachineTwo;
+        // $attendanceApiMachineThree = new AttendanceApiMachineThree;
+        // $AttendanceApiHeadOfficeMachine = new AttendanceApiHeadOfficeMachine;
         $attendanceApiMachineOne = new AttendanceApiMachineOne();
         $attendanceApiMachineTwo = new AttendanceApiMachineTwo();
         $attendanceApiMachineThree = new AttendanceApiMachineThree();
+        $AttendanceApiHeadOfficeMachine = new AttendanceApiHeadOfficeMachine();
         $attendanceApiMachineOne->storeAttendance($workerCode, $fromDate, $toDate);
         $attendanceApiMachineTwo->storeAttendance($workerCode, $fromDate, $toDate);
         $attendanceApiMachineThree->storeAttendance($workerCode, $fromDate, $toDate);
+        $AttendanceApiHeadOfficeMachine->storeAttendance($workerCode, $fromDate, $toDate);
 
         // Artisan::call('attendance:process', [
         //     '--workers' => $workerCode,
@@ -382,6 +382,15 @@ class AttendanceController extends Controller
             '--month' => $yearMonth,
         ]);
 
+
+
+
+        // dd([
+        //     'arrResponse' => $arrResponse,
+        //     'output' => Artisan::output(),
+        //     'worker_code' => $workerCode,
+        //     'year_month' => $yearMonth,
+        // ]);
         return redirect()
             ->route('attendance.recalculate', [
                 'worker' => $workerCode,
