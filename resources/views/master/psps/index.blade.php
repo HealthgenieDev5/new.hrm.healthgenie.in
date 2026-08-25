@@ -54,6 +54,9 @@
                                 <th class="text-dark fw-bolder text-hover-primar fs-6">
                                     Contact Person
                                 </th>
+                                <th class="text-dark fw-bolder text-hover-primar fs-6">
+                                    Status
+                                </th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -106,6 +109,21 @@
                                         </div>
                                     </td>
                                     <td>
+                                        @if ($psp->is_active)
+                                            <span class="badge badge-light-success">Active</span>
+                                        @else
+                                            <span class="badge badge-light-danger d-block mb-1">Inactive</span>
+                                            @if ($psp->deactivated_at)
+                                                <small class="text-muted d-block">
+                                                    {{ $psp->deactivated_at->format('d M Y, h:i A') }}
+                                                    @if ($psp->deactivatedBy)
+                                                        by {{ $psp->deactivatedBy->name }}
+                                                    @endif
+                                                </small>
+                                            @endif
+                                        @endif
+                                    </td>
+                                    <td>
                                         <div class="d-flex justify-content-center">
                                             @hasPermissionTo('Edit Psp')
                                                 <a href="{{ route('master.psps.edit', $psp->id) }}"
@@ -115,6 +133,22 @@
                                                         <i class="fa fa-pencil-alt" aria-hidden="true"></i>
                                                     </span>
                                                 </a>
+                                                <form action="{{ route('master.psps.toggle-status', $psp->id) }}"
+                                                    method="POST" class="d-inline me-1">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button type="submit"
+                                                        class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm"
+                                                        title="{{ $psp->is_active ? 'Deactivate' : 'Activate' }}">
+                                                        <span class="svg-icon svg-icon-3">
+                                                            @if ($psp->is_active)
+                                                                <i class="fa fa-toggle-on" aria-hidden="true"></i>
+                                                            @else
+                                                                <i class="fa fa-toggle-off" aria-hidden="true"></i>
+                                                            @endif
+                                                        </span>
+                                                    </button>
+                                                </form>
                                             @endhasPermissionTo
                                             <a href="#"
                                                 class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm delete-company"

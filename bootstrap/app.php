@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckPspActive;
 use App\Http\Middleware\PermissionMiddleware;
 use App\Http\Middleware\RoleMiddleware;
 use Illuminate\Foundation\Application;
@@ -18,6 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
             // 'role' => \App\Http\Middleware\RoleMiddleware::class,
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
+        ]);
+
+        $middleware->web(append: [
+            CheckPspActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

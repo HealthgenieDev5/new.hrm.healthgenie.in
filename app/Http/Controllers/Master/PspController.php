@@ -147,4 +147,22 @@ class PspController extends Controller
         $psp->delete();
         return redirect()->route('master.psps.index')->with('success', 'Psp deleted successfully');
     }
+
+    /**
+     * Toggle the active/inactive status of the specified resource.
+     */
+    public function toggleStatus(Request $request, string $id)
+    {
+        $psp = Psp::findOrFail($id);
+        $isActive = ! $psp->is_active;
+
+        $psp->update([
+            'is_active' => $isActive,
+            'deactivated_at' => $isActive ? null : now(),
+            'deactivated_by' => $isActive ? null : $request->user()->id,
+        ]);
+
+        $status = $isActive ? 'activated' : 'deactivated';
+        return redirect()->route('master.psps.index')->with('success', "Psp {$status} successfully.");
+    }
 }

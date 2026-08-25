@@ -25,6 +25,14 @@ class Psp extends Model
         'user_id',
         'day_worker_target',
         'night_worker_target',
+        'is_active',
+        'deactivated_at',
+        'deactivated_by',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'deactivated_at' => 'datetime',
     ];
 
     public function workers()
@@ -40,5 +48,10 @@ class Psp extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function deactivatedBy()
+    {
+        return $this->belongsTo(User::class, 'deactivated_by');
     }
 }

@@ -32,6 +32,7 @@ Route::prefix('master')->name('master.')->group(function () {
     Route::resource('designations', DesignationController::class)->middleware(['auth', 'verified', 'permission:Manage Designations']);
     Route::resource('holidays', HolidayController::class)->middleware(['auth', 'verified', 'permission:Manage Holidays']);
     Route::resource('psps', PspController::class)->middleware(['auth', 'verified', 'permission:Manage PSP']);
+    Route::patch('psps/{psp}/toggle-status', [PspController::class, 'toggleStatus'])->name('psps.toggle-status')->middleware(['auth', 'verified', 'permission:Manage PSP']);
 
 
 
