@@ -3,6 +3,7 @@
 namespace App\Services\AttendanceApi;
 
 use App\Models\Attendance;
+use App\Models\Worker;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -30,6 +31,8 @@ class AttendanceApiHeadOfficeMachine
     {
         $postData = ['Empcode' => $empcode, 'FromDate' => $fromDate, 'ToDate' => $toDate];
 
+        // dd($postData);
+
         try {
             $response = Http::withHeaders(['Authorization' => "Basic {$this->auth}"])->get($this->url, $postData);
 
@@ -37,7 +40,24 @@ class AttendanceApiHeadOfficeMachine
                 $data = $response->json();
 
                 if ($data) {
-                    foreach ($data['InOutPunchData'] ?? [] as $record) {
+
+                    //filter out any empcode which does not exist in our system. 
+                    //keep only those who are in our system.
+                    //basically an intersection of employee codes
+                    $records = $data['InOutPunchData'] ?? [];
+
+                    // $totalRecords = count($records);
+
+                    $existingCodes = Worker::whereIn('code', array_unique(array_column($records, 'Empcode')))
+                        ->pluck('code')
+                        ->flip();
+
+                    $records = array_filter($records, fn($record) => isset($existingCodes[$record['Empcode'] ?? null]));
+
+                    // $filteredRecords = count($records);
+                    // dd(['totalRecords' =>$totalRecords, 'filteredRecords'=>$filteredRecords]);
+
+                    foreach ($records as $record) {
 
                         $shiftType = 'day';
                         $intime = $record['INTime'] !== '--:--' ? $record['INTime'] : null;

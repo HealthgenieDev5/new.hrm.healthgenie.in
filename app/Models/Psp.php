@@ -54,4 +54,19 @@ class Psp extends Model
     {
         return $this->belongsTo(User::class, 'deactivated_by');
     }
+
+    /**
+     * Blade view for the attendance PDF header block, fixed per PSP via config/pdf_layouts.php.
+     */
+    public static function pdfHeaderViewFor(?Psp $psp): string
+    {
+        $default = (int) config('pdf_layouts.default', 1);
+        $layout = $psp ? (int) config("pdf_layouts.psp.{$psp->id}", $default) : $default;
+
+        if ($layout < 1 || $layout > (int) config('pdf_layouts.count', 1)) {
+            $layout = $default;
+        }
+
+        return "reports.attendance-report.headers.layout-{$layout}";
+    }
 }

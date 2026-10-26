@@ -41,7 +41,7 @@ class AttendancePdfService
 
         $isFullMonth = ($rangeStart === $fullMonthStart && $rangeEnd === $fullMonthEnd);
 
-        $workersQuery = Worker::query();
+        $workersQuery = Worker::query()->with('psp');
 
         if ($request->psp && $request->psp != 'all') {
             $workersQuery->where('psp_id', $request->psp);

@@ -1,0 +1,65 @@
+<x-app-layout>
+
+    <x-slot name="pageTitle">
+        {{ $pageTitle }}
+    </x-slot>
+
+    <x-flash-message />
+
+    <!--begin::Post-->
+    <div class="post d-flex flex-column-fluid" id="kt_post">
+        <!--begin::Container-->
+        <div id="kt_content_container" class="container-fluid">
+
+            @foreach ($report as $reportRow)
+                <div class="card mb-5" style="background-size: auto calc(100% + 10rem); background-position-x: 100%;">
+                    <div class="card-body table-responsive">
+                        <table class="table table-row-bordered table-striped mb-7">
+                            <tr>
+                                <th>
+                                    <span>Line: {{ $reportRow->get('line_name') }} </span>
+                                    <span> -- </span>
+                                    <a class="btn- btn-sm btn-primary"
+                                        href="{{ route('production.planning.create', ['line_id' => $reportRow->get('line_id')]) }}">Modify</a>
+                                </th>
+                                <th>Date: {{ $date }}</th>
+                            </tr>
+                            <tr>
+                                <td>Required</td>
+                                <td>{{ $reportRow->get('workers') }}</td>
+                            </tr>
+                            <tr>
+                                <td>extras</td>
+                                <td>{{ $reportRow->get('extras') }}</td>
+                            </tr>
+                            <tr>
+                                <td>present</td>
+                                <td>{{ $reportRow->get('present') }}</td>
+                            </tr>
+                            <tr>
+                                <td>shortfall</td>
+                                <td>{{ $reportRow->get('shortfall') }}</td>
+                            </tr>
+                            <tr>
+                                <td>supervisors</td>
+                                <td>{{ $reportRow->get('supervisors') }}</td>
+                            </tr>
+                            <tr>
+                                <td>qas</td>
+                                <td>{{ $reportRow->get('qas') }}</td>
+                            </tr>
+                            <tr>
+                                <td>status</td>
+                                <td>{{ $reportRow->get('status') }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            @endforeach
+
+        </div>
+        <!--end::Container-->
+    </div>
+    <!--end::Post-->
+
+</x-app-layout>

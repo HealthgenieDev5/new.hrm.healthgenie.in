@@ -4,65 +4,55 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Laravel-based Human Resource Management (HRM) system for HealthGenie. The application manages worker data, attendance tracking, salary processing, production planning, and various HR operations for manufacturing environments.
+Laravel 11 (PHP ^8.2) HRM system for HealthGenie's manufacturing workforce: worker master data, machine attendance ingestion/processing, salary + incentive calculation, tenure bonuses, production/line planning, and reporting. UI is Blade + Tailwind + Alpine.js (+ Bootstrap 5 pagination, Yajra DataTables), PDFs via dompdf, Excel via maatwebsite/excel. Auth scaffolding is Laravel Breeze.
 
-## Development Commands
+## Commands
 
-- **Start development server**: `composer run dev` (runs Laravel server, queue listener, and Vite concurrently)
-- **Laravel server only**: `php artisan serve`
-- **Build frontend assets**: `npm run build`
-- **Watch frontend assets**: `npm run dev`
-- **Run tests**: `php artisan test` (using Pest PHP)
-- **Code style**: `./vendor/bin/pint` (Laravel Pint)
-- **Database migrations**: `php artisan migrate`
-- **Queue processing**: `php artisan queue:listen`
+- Dev (server + queue listener + Vite): `composer run dev`
+- Server only: `php artisan serve`; assets: `npm run dev` / `npm run build`
+- Tests (Pest): `php artisan test`; single file/test: `php artisan test tests/Feature/ProfileTest.php` or `php artisan test --filter="test name"`
+- Style: `./vendor/bin/pint`
+- Scheduler (needed locally to exercise scheduled jobs): `php artisan schedule:work`
 
-## Architecture & Structure
+Tests: phpunit.xml sets array cache/session and sync queue but the sqlite DB lines are **commented out**, so tests use whatever DB `.env` points at (MySQL in this repo's `.env`). Don't run the suite against a database with real data — enable the sqlite/`:memory:` lines in phpunit.xml first. Only the Breeze auth/profile tests exist.
 
-### Core Laravel Structure
-- **Entry point**: `public/index.php` - Laravel application entry
-- **Main routes**: `routes/web.php` - Primary web routes with module includes
-- **Dashboard**: `app/Http/Controllers/DashboardController.php` - Main dashboard logic
+### Artisan commands (app/Console/Commands)
 
-### Key Directories
-- `app/Http/Controllers/` - Controllers organized by module:
-  - `AttendanceController.php` - Attendance management
-  - `WorkerController.php` - Worker/employee management
-  - `Master/` - Master data controllers (designations, lines, etc.)
-  - `Reports/` - Reporting functionality
-  - `Overrides/` - Shift and manual punching overrides
-- `app/Models/` - Eloquent models for all business entities
-- `app/Services/` - Business logic services:
-  - `AttendanceProcessingService.php` - Core attendance processing
-  - `SalaryProcessingService.php` - Salary calculations
-  - `WorkerService.php` - Worker-related operations
-- `app/Repositories/` - Data access layer
-- `resources/views/` - Blade templates organized by feature
-- `database/migrations/` - Database schema definitions
+- `attendance:fetch [--month=YYYY-MM] [--worker=CODE]` — pull punches from the machine APIs
+- `attendance:process [--month=YYYY-MM] [--workers=A,B]` — raw `attendances` → `processed_attendances`
+- `attendance:process-worker {code} [--month=]` — single worker
+- `salary:process [--month=YYYY-MM] [--workers=A,B]`
+- `bonus:process` (tenure bonuses), `mail:send-absenteeism-report`, `shiftoverride:bulk`, `process:dashboard`
 
-### Key Models & Business Logic
-- **Worker**: Core employee model with relationships to shifts, attendance, salary
-- **Attendance**: Tracks worker check-ins/check-outs with processing logic
-- **ProcessedSalary**: Calculated salary data with incentives
-- **Planning**: Production planning and line assignments
-- **Shift**: Shift definitions and overrides
+Schedule is defined in `routes/console.php` (Laravel 11 style, no Kernel): `attendance:fetch` every 15 min, `attendance:process` every 30 min, `bonus:process` daily 01:00, absenteeism report daily 12:00. (The comment above the fetch schedule says "3 minutes" — the code is 15.)
 
-### Authentication & Authorization
-- Role-based access control with custom middleware
-- Permissions system integrated with User model
-- Super admin functionality (user ID 1 or SUPER_ADMIN_ID env)
+## Architecture
 
-### Frontend Technology
-- Laravel Blade templates with Tailwind CSS
-- Vite for asset compilation
-- Alpine.js for interactive components
-- DataTables for complex data grids
+### Request flow & wiring
+- `bootstrap/app.php` registers only `web` + `commands` routing. **`routes/api.php` is not loaded** (no `api:` entry), so the `/call-logs/batch` endpoint (`Api\CallLogBatchController`, `LogNazrulApiRequests` middleware) is currently unreachable unless that is changed.
+- `routes/web.php` `require`s per-module files: `auth`, `attendance`, `overrides`, `master`, `reports`, `settings`, `planning` (note `routes/worker.php` exists but is not required from web.php — check before assuming worker routes live there).
+- Route middleware aliases: `permission:<Name>` and `role:<Name>`. A global `CheckPspActive` is appended to the `web` group.
+- `app/Providers/InterfacesServiceProvider` binds `WorkerServiceInterface`, `SalaryProcessingServiceInterface`, `WorkerAttendanceRepositoryInterface`, `ProductionPlanningInterface` to their implementations — type-hint the interfaces in controllers.
+- `ObserverServiceProvider` attaches `AttendanceFilterObserver` to master models (Psp, Shift, Workertype, WorkingArea, Designation, …) to bust the `attendance_filter_data` cache via `AttendanceCacheHelper`. When adding a master model that feeds attendance filters, register it there.
 
-### Background Processing
-- Queue-based attendance processing (`ProcessAttendance` command)
-- Salary processing commands (`ProcessSalariesCommand`)
-- Automated data fetching from attendance machines
+### Attendance pipeline (the core of the app)
+1. `Services/AttendanceApi/*` (`AttendanceApiMachineOne/Two/Three`, `HeadOfficeMachine`) call vendor attendance-machine HTTP APIs (credentials in `config/services.php`) and store raw punches into `Attendance`. `attendance:fetch` orchestrates all machines.
+2. `AttendanceProcessingService` turns raw punches into `ProcessedAttendance` rows per worker/day: resolves shift (base `Shift` + temporary `ShiftOverride`, plus `ManualPunching`), computes work hours, late/early minutes, status (`P`, `H/D`, `A`), etc.
+3. `AttendanceSummaryService`, `WorkerAttendanceService` (+ `ServiceHelpers/`), `AttendancePdfService` and `Controllers/Reports/*` read processed data for dashboards/reports/PDFs.
+4. `SalaryProcessingService` consumes processed attendance to write `ProcessedSalary` / `ProcessedSalaryIncentive`; `TenureBonusService` handles `TenureBonusRule` / `WorkerTenureBonus`.
 
-### Testing
-- Pest PHP testing framework
-- PHPUnit XML configuration available
+**Shift reduction:** there is no hardcoded 12h/8h logic. `Shift.sub_type` (`regular` | `reduced`) and `is_internal` drive `AttendanceProcessingService::processBy8HrsShift()`, which scales hours/late/early/grace by 2/3 (regular) or 30.43% reduction (reduced) unless the shift is internal. Read `SHIFT_REDUCTION_LOGIC.md` before touching this.
+
+### Authorization model
+- Custom RBAC (not Spatie): `User` ↔ `Role` ↔ `Permission`; `User::hasRole()` / `hasPermission()` compare names case-insensitively via `Str::title`. Super admin = user id `SUPER_ADMIN_ID` (env, default 1) or role "Super Admin". Policies in `app/Policies` per master entity. See `AUTHENTICATION.md` for detail.
+- **PSP** (production supervisor) is a user-linked entity (`User::psp()`). Inactive PSPs are logged out by `CheckPspActive` and blocked in `LoginRequest`.
+- `Worker` has a global `WorkerVisibilityScope`: roles Super Admin/HR/Admin/Hr Executive see all workers, `PSP` sees only workers with their `psp_id`, everyone else — and unauthenticated — sees none. The scope is **skipped when running in console**, so commands/tinker see all workers while web requests don't; use `withoutGlobalScopes()` when a web path legitimately needs unscoped workers (e.g. reports for other roles).
+- `Revisionable` trait writes old/new values of changed attributes to `revisions` on model update — add it to models needing an audit trail.
+
+### Layout notes
+- Controllers are grouped by module (`Master/`, `Reports/`, `Overrides/`, `Planning/`, `Api/`); datatable-backed lists often have a dedicated `*DatatableService` in `app/Services`.
+- Worker queries live in `WorkerRepository` / `Models/Traits/WorkerScopes`.
+
+## Repo hygiene gotchas
+
+The tree is full of manual backups that are not live code: `*.bkp*`, `*_bkp_*`, and whole copies like `app_2025_08_25/`, `app_bkp2026*/`, `routes_*`, `resources_*`, `database_*`. Edit only the files under `app/`, `routes/`, `resources/`, `database/`, and exclude the backup directories/suffixes from searches. Backups inside `app/` have non-`.php` endings, so they are never autoloaded. `new_hrm_healthgenie_in.sql` and `workers_import.csv` at the root are data dumps.

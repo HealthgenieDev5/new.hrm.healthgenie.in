@@ -55,7 +55,7 @@
                                 <i class="bi bi-grid fs-3"></i>
                             </span>
                         </span>
-                        <span class="menu-title">Dashboards</span>
+                        <span class="menu-title">Dashboards - new server</span>
                         <span class="menu-arrow"></span>
                     </span>
 

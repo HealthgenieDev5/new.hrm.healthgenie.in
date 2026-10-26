@@ -77,7 +77,7 @@
         <table class="footer-table" style="text-align: left">
             <thead>
                 <tr>
-                    <th colspan="3 ">Disclaimer</th>
+                    <th colspan="3">Confirmation / Verification</th>
                 </tr>
                 <!-- <tr>
                     <td class="NotoSansDevanagari" colspan="3">1. उपरोक्त नामित व्यक्ति उपरोक्त उल्लिखित PSP ( उत्पादन सेवा प्रदाता ) के कर्मचारी हैं।</td>
@@ -96,13 +96,11 @@
                 </tr> -->
                 <tr>
                     <th colspan="3">
-                        <img src="<?= asset('media/disclaimer/footer.png') ?>" style="max-width:100%; max-height: 100%; height:70px; width:100%;" />
+                        <img src="{{ public_path('media/disclaimer/footer.png') }}" style="max-width:100%; max-height: 100%; height:98px; width:100%;" />
                     </th>
                 </tr>
                 <tr>
-                    <th>Worker Name</th>
-                    <th>Worker Signature</th>
-                    <th>Worker Thumb Impression</th>
+                    <th colspan="3">Worker Signature / Thumb Impression</th>
                 </tr>
             </thead>
         </table>
@@ -119,53 +117,20 @@
 
         @if ($attendance && $summary['presentOnWeekOff'] > 0)
 
-        <table style="width:100%;">
-            <tbody>
-                <tr>
-                    <td style="width: 40%; vertical-align: top; padding:0px;">
-                        <table style="width: max-content; margin-right: auto;" border="1">
-                            <tbody>
-                                <tr>
-                                    <td style="text-align: left">PSP Name</td>
-                                    <th style="text-align: left">{{$worker->psp->name}}</th>
-                                </tr>
-                                <tr>
-                                    <td style="text-align: left">Worker name</td>
-                                    <th style="text-align: left">{{$worker->name}}</th>
-                                </tr>
-                                <tr>
-                                    <td style="text-align: left">Worker code</td>
-                                    <th style="text-align: left">{{$worker->code}}</th>
-                                </tr>
-                                <tr>
-                                    <td style="text-align: left">Joining Date</td>
-                                    <th style="text-align: left">{{$date_of_joining}}</th>
-                                </tr>
-                                <tr>
-                                    <td style="text-align: left">Year Month</td>
-                                    <th style="text-align: left">{{$attendance?->first()->date->format('M Y')}}</th>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </td>
-                    <td style="width: 20%; padding:0px;"></td>
-                    <td style="width: 40%; vertical-align: top; padding:0px;">
-                        <table style="width:100%; text-align: right; " border="1">
-                            <tbody>
-                                <tr>
-                                    <td style="width:75%">Week Off in Month</td>
-                                    <th style="width:75%">{{$summary['totalIsWeekOff']}}</th>
-                                </tr>
-                                <tr>
-                                    <td style="width:75%">Working Week Off Days</td>
-                                    <th style="width:75%">{{$summary['presentOnWeekOff']}}</th>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        @php
+            $info = [
+                'PSP Name' => $worker->psp?->name,
+                'Worker name' => $worker->name,
+                'Worker code' => $worker->code,
+                'Joining Date' => $date_of_joining,
+                'Year Month' => $attendance?->first()?->date?->format('M Y'),
+            ];
+            $stats = [
+                'Week Off in Month' => $summary['totalIsWeekOff'],
+                'Working Week Off Days' => $summary['presentOnWeekOff'],
+            ];
+        @endphp
+        @include(\App\Models\Psp::pdfHeaderViewFor($worker->psp), compact('info', 'stats'))
         <br>
         <table border="1" style="text-align: center" class="attendance-table">
             <thead>

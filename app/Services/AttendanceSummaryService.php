@@ -202,7 +202,8 @@ class AttendanceSummaryService
         $yearMonth = $request->input('yearmonth', date('Y-m'));
         $holidays = $this->getHolidays();
         [$startDate, $endDate] = $this->getDateRange($yearMonth);
-        $psps = $this->getAccessiblePsps();
+        //$psps = $this->getAccessiblePsps();
+        $psps = $this->getAccessiblePsps($yearMonth);
 
         $tableRows = $this->getTableRows();
         $pspDailyData = [];
@@ -236,15 +237,44 @@ class AttendanceSummaryService
         return [$start, $end];
     }
 
-    private function getAccessiblePsps()
+    // private function getAccessiblePsps()
+    // {
+    //     if ($this->user->hasRole(['Super Admin', 'HR', 'Admin', 'Hr Executive'])) {
+    //         return Psp::all();
+    //     } elseif ($this->user->hasRole('PSP')) {
+    //         return [$this->user->psp];
+    //     }
+    //     return null;
+    // }
+
+    private function getAccessiblePsps(string $yearMonth)
     {
         if ($this->user->hasRole(['Super Admin', 'HR', 'Admin', 'Hr Executive'])) {
-            return Psp::all();
+            return Psp::where(function ($query) use ($yearMonth) {
+                $query->where('is_active', true)
+                    ->orWhere('deactivated_at', '>=', Carbon::parse($yearMonth . '-01')->startOfMonth());
+            })->get();
         } elseif ($this->user->hasRole('PSP')) {
-            return [$this->user->psp];
+            return $this->isPspVisibleForMonth($this->user->psp, $yearMonth) ? [$this->user->psp] : [];
         }
         return null;
     }
+
+    private function isPspVisibleForMonth(?Psp $psp, string $yearMonth): bool
+    {
+        if (!$psp) {
+            return false;
+        }
+
+        if ($psp->is_active) {
+            return true;
+        }
+
+        return $psp->deactivated_at && $psp->deactivated_at->greaterThanOrEqualTo(
+            Carbon::parse($yearMonth . '-01')->startOfMonth()
+        );
+    }
+
 
     private function getTableRows(): array
     {

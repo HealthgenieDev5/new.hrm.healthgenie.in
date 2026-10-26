@@ -50,9 +50,9 @@ class FetchAttendance extends Command
     ) {
         parent::__construct();
         $this->empcode = 'ALL';
-        // $this->fromDate = date('01/m/Y');
-        $this->fromDate = date('d/m/Y');
-        $this->toDate = date('t/m/Y');
+        $this->fromDate = date('01/m/Y');
+        $this->toDate = date('d/m/Y');
+        // $this->toDate = date('t/m/Y');
     }
 
     /**
@@ -135,6 +135,7 @@ class FetchAttendance extends Command
     private function fetchDayShiftAttendance1()
     {
         $this->info('Started to fetch attendance for Day Shift from machine 1');
+        // dd([$this->empcode, $this->fromDate, $this->toDate]);
         $result = $this->attendanceApiMachineOne->storeAttendance($this->empcode, $this->fromDate, $this->toDate);
         if ($result['success']) {
             $this->info($result['message']);
@@ -175,13 +176,23 @@ class FetchAttendance extends Command
 
     private function fetchHOWorkerAttendance()
     {
+        // dd(['RS391', $this->fromDate, $this->toDate]);
+
         $this->info('Started to fetch attendance for Head Office Worker');
-        // $result = $this->attendanceApiHeadOfficeMachine->storeAttendance($this->empcode, $this->fromDate, $this->toDate);
-        $result = $this->attendanceApiHeadOfficeMachine->storeAttendance('RS391', $this->fromDate, $this->toDate);
-        $result = $this->attendanceApiHeadOfficeMachine->storeAttendance('RS390', $this->fromDate, $this->toDate);
-        $result = $this->attendanceApiHeadOfficeMachine->storeAttendance('RS417', $this->fromDate, $this->toDate);
-        $result = $this->attendanceApiHeadOfficeMachine->storeAttendance('RS453', $this->fromDate, $this->toDate);
-        $result = $this->attendanceApiHeadOfficeMachine->storeAttendance('RS489', $this->fromDate, $this->toDate);
+        $result = $this->attendanceApiHeadOfficeMachine->storeAttendance($this->empcode, $this->fromDate, $this->toDate);
+        // $result = $this->attendanceApiHeadOfficeMachine->storeAttendance('RS391', $this->fromDate, $this->toDate);
+        // $result = $this->attendanceApiHeadOfficeMachine->storeAttendance('RS390', $this->fromDate, $this->toDate);
+        // $result = $this->attendanceApiHeadOfficeMachine->storeAttendance('RS417', $this->fromDate, $this->toDate);
+        // $result = $this->attendanceApiHeadOfficeMachine->storeAttendance('RS453', $this->fromDate, $this->toDate);
+        // $result = $this->attendanceApiHeadOfficeMachine->storeAttendance('RS489', $this->fromDate, $this->toDate);
+
+        
+        
+
+
+
+
+        
         if ($result['success']) {
             $this->info($result['message']);
         } else {

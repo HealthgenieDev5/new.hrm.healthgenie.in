@@ -435,11 +435,11 @@ class AttendanceProcessingService
         $originalShiftSubType = $shiftDetails['shiftSubType'];
 
 
-        if ($date->format('Y-m-d') <= '2026-05-07') {
-            $expandedShiftDetails = $worker->shift?->is_internal ? $shiftDetails : $this->getShiftDetails($worker, true);
-        } else {
-            $expandedShiftDetails = $worker->shift?->is_internal ? $shiftDetails : $this->getShiftDetails($worker, false);
-        }
+        // if ($date->format('Y-m-d') <= '2026-05-07') {
+        $expandedShiftDetails = $worker->shift?->is_internal ? $shiftDetails : $this->getShiftDetails($worker, true);
+        // } else {
+        //     $expandedShiftDetails = $worker->shift?->is_internal ? $shiftDetails : $this->getShiftDetails($worker, false);
+        // }
 
 
 
@@ -1294,8 +1294,8 @@ class AttendanceProcessingService
 
 
 
-                if ($data['shift_sub_type'] == 'reduced' && $data['date'] <= '2026-05-07') {
-                    // if ($data['shift_sub_type'] == 'reduced') {
+                // if ($data['shift_sub_type'] == 'reduced' && $data['date'] <= '2026-05-07') {
+                if ($data['shift_sub_type'] == 'reduced') {
                     $data['total_work_hours'] = (int) round($this->reduceBy3043Percent($data['total_work_hours']));
                     $data['work_hours_within_shift'] = (int) round($this->reduceBy3043Percent($data['work_hours_within_shift']));
                     $data['late_coming_minutes'] = (int) round($this->reduceBy3043Percent($data['late_coming_minutes']));
@@ -1305,8 +1305,8 @@ class AttendanceProcessingService
 
                     $data['late_coming_minutes_original'] = (int) round($this->reduceBy3043Percent($data['late_coming_minutes_original']));
                     $data['early_going_minutes_original'] = (int) round($this->reduceBy3043Percent($data['early_going_minutes_original']));
-                } else if ($data['shift_sub_type'] != 'reduced' && $data['date'] <= '2026-05-07') {
-                    // } else if ($data['shift_sub_type'] != 'reduced') {
+                    // } else if ($data['shift_sub_type'] != 'reduced' && $data['date'] <= '2026-05-07') {
+                } else if ($data['shift_sub_type'] != 'reduced') {
                     $data['total_work_hours'] = (int) round($this->reduceBy33Percent($data['total_work_hours']));
                     $data['work_hours_within_shift'] = (int) round($this->reduceBy33Percent($data['work_hours_within_shift']));
                     $data['late_coming_minutes'] = (int) round($this->reduceBy33Percent($data['late_coming_minutes']));

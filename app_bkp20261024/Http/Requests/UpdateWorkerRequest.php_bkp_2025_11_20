@@ -1,0 +1,100 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
+
+class UpdateWorkerRequest extends FormRequest
+{
+    private $user;
+
+    /**
+     * Constructor to assign the authenticated user.
+     */
+    public function __construct()
+    {
+        parent::__construct(); // Ensure the parent constructor runs
+        /** @var \App\Models\User|null $user */
+        $this->user = Auth::user();
+    }
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return $this->user->hasRole(['Super Admin', 'HR', 'Admin', 'Hr Executive', 'PSP']);
+
+        // $worker = $this->route('worker'); // Get the worker from the route
+        // return Gate::allows('update', $worker);
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        $worker = $this->route('worker');
+
+        // Ensure worker is an instance of Worker model (not null or string)
+        if (!$worker instanceof \App\Models\Worker) {
+            abort(400, 'Invalid worker data'); // Handle error gracefully
+        }
+
+        if ($this->user->hasRole('PSP')) {
+            return $this->pspRules($worker);
+        }
+        if ($this->user->hasRole(['Super Admin', 'HR', 'Admin', 'Hr Executive'])) {
+            return $this->adminHrRules($worker);
+        }
+
+        return []; // Fallback empty rules
+
+    }
+
+    /**
+     * Validation rules for PSP role.
+     */
+    private function pspRules($worker): array
+    {
+        return [
+            'name' => ['required', 'string', 'min:2'],
+            'father_name' => ['required', 'string', 'min:2'],
+            // 'shift_id' => 'required|exists:shifts,id',
+            'mobile_number' => ['required', 'numeric', 'digits:10', Rule::unique('workers')->ignore($worker->id)],
+            'gender' => ['required', 'in:male,female,other'],
+            'adhar_number' => ['required', 'string', 'size:12', 'regex:/^[a-zA-Z0-9]{12}$/'],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'adhar_front' => ['nullable', 'file', 'mimes:jpeg,png,jpg,gif,pdf', 'max:2048'],
+            'adhar_back' => ['nullable', 'file', 'mimes:jpeg,png,jpg,gif,pdf', 'max:2048'],
+        ];
+    }
+
+    /**
+     * Validation rules for Super Admin and HR.
+     */
+    private function adminHrRules($worker): array
+    {
+        return [
+            'code' => ['required', 'string', 'min:3', Rule::unique('workers')->ignore($worker->id)],
+            'name' => ['required', 'string', 'min:2'],
+            'father_name' => ['required', 'string', 'min:2'],
+            'date_of_joining' => ['required', 'date'],
+            'shift_id' => 'required|exists:shifts,id',
+            'employment_status' => ['required', Rule::in(['Active', 'Left', 'Terminated', 'Absconded', 'Retired', 'Under Resignation'])],
+            'date_of_leaving' => ['nullable', 'date', 'required_unless:employment_status,Active'],
+
+            'mobile_number' => ['required', 'numeric', 'digits:10', Rule::unique('workers')->ignore($worker->id)],
+            'gender' => ['required', 'in:male,female,other'],
+            'adhar_number' => ['required', 'string', 'size:12', 'regex:/^[a-zA-Z0-9]{12}$/', Rule::unique('workers')->ignore($worker->id)],
+            'psp_id' => 'required|exists:psps,id',
+            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'adhar_front' => ['nullable', 'file', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'adhar_back' => ['nullable', 'file', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+        ];
+    }
+}

@@ -1,0 +1,259 @@
+<x-app-layout>
+
+    <x-slot name="pageTitle">
+        {{ $pageTitle }}
+    </x-slot>
+
+     <div class="post d-flex flex-column-fluid" id="kt_post">
+        <!--begin::Container-->
+        <div id="kt_content_container" class="container-xxl">
+
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+
+                            <div class="card-body">
+
+
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <h4>Pending Bonuses</h4>
+                                         @if(session('success'))
+                                                <div class="alert alert-success">
+                                                    {{ session('success') }}
+                                                </div>
+                                            @endif
+
+                                            {{-- <form method="GET" action="{{ route('tenure-bonus.index') }}">
+                                                <input type="text" class="form-control" name="search" value="{{ request('search') }}" placeholder="Search...">
+                                                <button type="submit">Search</button>
+                                            </form> --}}
+
+                                        <div class="table-responsive">
+                                            <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-4" id="pending_bonuses_table">
+                                                {{-- <thead>
+                                                    <tr>
+                                                        <th class="text-dark fw-bolder text-hover-primar fs-6">Worker</th>
+                                                        <th class="text-dark fw-bolder text-hover-primar fs-6">Working Days</th>
+                                                        <th class="text-dark fw-bolder text-hover-primar fs-6">Bonus Amount</th>
+                                                        <th class="text-dark fw-bolder text-hover-primar fs-6">Bonus Date</th>
+                                                        <th class="text-dark fw-bolder text-hover-primar fs-6">PSP Worker</th>
+                                                        <th class="text-dark fw-bolder text-hover-primar fs-6">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @forelse($pendingBonuses as $bonus)
+                                                        <tr>
+                                                            <td class="py-1">{{ $bonus->worker->name }}</td>
+                                                            <td class="py-1">{{ $bonus->working_days_completed }}</td>
+                                                            <td class="py-1">₹{{ number_format($bonus->bonus_amount, 2) }}</td>
+                                                            <td class="py-1">{{ optional($bonus->actual_eligibility_date)->format('d-m-Y') }}</td>
+
+                                                            <td class="py-1">
+                                                                @if($bonus->is_psp_worker)
+                                                                    <span class="badge badge-info">Yes</span>
+                                                                @else
+                                                                    <span class="badge badge-secondary">No</span>
+                                                                @endif
+                                                            </td>
+
+                                                            <td class="py-1">
+                                                                <div class="d-flex justify-content-center">
+                                                                    <button type="button" class="btn btn-success btn-sm"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#markPaidModal{{ $bonus->id }}">
+                                                                        Mark as Paid
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+
+                                                        <!-- Mark as Paid Modal -->
+                                                        <div class="modal fade" id="markPaidModal{{ $bonus->id }}" tabindex="-1" role="dialog">
+                                                            <div class="modal-dialog" role="document">
+                                                                <div class="modal-content">
+                                                                    <form action="{{ route('tenure-bonus.mark-paid', $bonus) }}" method="POST">
+                                                                        @csrf
+                                                                        <div class="modal-header">
+                                                                            <h5 class="modal-title">Mark Bonus as Paid</h5>
+                                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                        </div>
+                                                                        <div class="modal-body">
+                                                                            <div class="mb-3">
+                                                                                <label>Payment Reference</label>
+                                                                                <input type="text" name="payment_reference" class="form-control" required>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="modal-footer">
+                                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                                            <button type="submit" class="btn btn-success">Confirm Payment</button>
+                                                                        </div>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @empty
+                                                        <tr>
+                                                            <td colspan="6" class="text-center">No pending bonuses found</td>
+                                                        </tr>
+                                                    @endforelse
+                                                </tbody> --}}
+                                                <div class="datatable-buttons-container">
+                                                    <thead>
+                                                    <tr>
+                                                        <th class="text-dark fw-bolder text-hover-primar fs-6">Worker</th>
+                                                        <th class="text-dark fw-bolder text-hover-primar fs-6">Working Days</th>
+                                                        <th class="text-dark fw-bolder text-hover-primar fs-6">Bonus Amount</th>
+                                                        <th class="text-dark fw-bolder text-hover-primar fs-6">Bonus Date</th>
+                                                        <th class="text-dark fw-bolder text-hover-primar fs-6">PSP Worker</th>
+                                                        <th class="text-dark fw-bolder text-hover-primar fs-6">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @forelse($pendingBonuses as $bonus)
+                                                        <tr>
+                                                            <td class="py-1">{{ $bonus->worker->name }}</td>
+                                                            <td class="py-1">{{ $bonus->working_days_completed }}</td>
+                                                            <td class="py-1">₹{{ number_format($bonus->bonus_amount, 2) }}</td>
+                                                            <td class="py-1">{{ optional($bonus->actual_eligibility_date)->format('d-m-Y') }}</td>
+
+                                                            <td class="py-1">
+                                                                @if($bonus->is_psp_worker)
+                                                                    <span class="badge badge-info">Yes</span>
+                                                                @else
+                                                                    <span class="badge badge-secondary">No</span>
+                                                                @endif
+                                                            </td>
+
+                                                            <td class="py-1">
+                                                                <div class="d-flex justify-content-center">
+                                                                    <button type="button" class="btn btn-success btn-sm"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#markPaidModal{{ $bonus->id }}">
+                                                                        Mark as Paid
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+
+                                                        <!-- Mark as Paid Modal -->
+                                                        <div class="modal fade" id="markPaidModal{{ $bonus->id }}" tabindex="-1" role="dialog">
+                                                            <div class="modal-dialog" role="document">
+                                                                <div class="modal-content">
+                                                                    <form action="{{ route('tenure-bonus.mark-paid', $bonus) }}" method="POST">
+                                                                        @csrf
+                                                                        <div class="modal-header">
+                                                                            <h5 class="modal-title">Mark Bonus as Paid</h5>
+                                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                        </div>
+                                                                        <div class="modal-body">
+                                                                            <div class="mb-3">
+                                                                                <label>Payment Reference</label>
+                                                                                <input type="text" name="payment_reference" class="form-control" required>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="modal-footer">
+                                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                                            <button type="submit" class="btn btn-success">Confirm Payment</button>
+                                                                        </div>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @empty
+                                                        <tr>
+                                                            <td colspan="6" class="text-center">No pending bonuses found</td>
+                                                        </tr>
+                                                    @endforelse
+                                                </tbody>
+
+                                                </div>
+                                            </table>
+                                        </div>
+                                        <div class="flex justify-end mt-4">
+                                            {{ $pendingBonuses->links() }}
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row pt-5">
+                    <div class="col-12">
+                        <div class="card">
+
+                            <div class="card-body">
+
+                                <div class="row mb-4">
+                                    <div class="col-md-12">
+                                        <h4>Bonus Rules</h4>
+                                        <div class="table-responsive">
+                                            <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-4">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="text-dark fw-bolder text-hover-primar fs-6">Working Days Range</th>
+                                                        <th class="text-dark fw-bolder text-hover-primar fs-6">Bonus Amount</th>
+                                                        <th class="text-dark fw-bolder text-hover-primar fs-6">Type</th>
+                                                        <th class="text-dark fw-bolder text-hover-primar fs-6">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($bonusRules as $rule)
+                                                        <tr>
+                                                            <td class="py-1">{{ $rule->working_days_start }} - {{ $rule->working_days_end }}</td>
+                                                            <td class="py-1">₹{{ number_format($rule->bonus_amount, 2) }}</td>
+                                                            <td class="py-1">{{ $rule->is_completion_bonus ? 'Completion Bonus' : 'Regular Bonus' }}</td>
+                                                            <td class="py-1">
+                                                                <span class="badge badge-success">Active</span>
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+        </div>
+        <!--end::Container-->
+    </div>
+    <!--end::Post-->
+
+    <x-slot name="scripts">
+        <script>
+            $(document).ready(function() {
+                $('#yearmonth_picker').flatpickr({
+                    dateFormat: 'Y-m',
+                    altInput: true,
+                    altFormat: 'M Y',
+                    altInputClass: "form-control form-control-sm"
+                });
+                $('#pending_bonuses_table').DataTable({
+                    dom: '<"datatable-buttons-container"B>rt',
+                    buttons: [
+                        {
+                            extend: 'excel',
+                            text: '<i class="fa-solid fa-file-excel"></i> Excel',
+                            className: 'btn btn-sm btn-success'
+                        }
+                    ]
+                });
+
+            })
+        </script>
+
+
+    </x-slot>
+
+</x-app-layout>
