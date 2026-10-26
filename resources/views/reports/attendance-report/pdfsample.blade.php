@@ -2,6 +2,8 @@
 
 <head>
     <style>
+        @include('reports.attendance-report.partials.pdf-fonts')
+
         body,
         div,
         p {
@@ -70,7 +72,12 @@
     </style>
 </head>
 
-<body>
+@php
+    $pdfPsps = collect($pdfData)->pluck('worker.psp')->filter()->unique('id');
+    $pdfFont = \App\Models\Psp::pdfFontStyleFor($pdfPsps->count() === 1 ? $pdfPsps->first() : null);
+@endphp
+
+<body style="{{ $pdfFont }}">
     <header></header>
     <footer>
         <table class="footer-table" style="text-align: left">
@@ -138,6 +145,7 @@
                         'Deduction days' => $summary['newDeductionDays'],
                     ];
                 @endphp
+                <div style="{{ \App\Models\Psp::pdfFontStyleFor($worker->psp) }}">
                 @include(\App\Models\Psp::pdfHeaderViewFor($worker->psp), compact('info', 'stats'))
                 <br>
                 <table border="1" style="text-align: center" class="attendance-table">
@@ -179,6 +187,7 @@
                         @endforeach
                     </tbody>
                 </table>
+                </div>
                 @if (!$loop->last)
                     <div style="page-break-before:always;"> </div>
                 @endif
